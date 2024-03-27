@@ -3,7 +3,7 @@ name: SSH to EC2 Instance and Remove Directory
 on:
   push:
     branches:
-      - main  # Cambia "main" por el nombre de tu rama principal si es diferente
+      - ivan_devops  # Cambia "main" por el nombre de tu rama principal si es diferente
 
 jobs:
   ssh_to_ec2_and_remove_dir:
