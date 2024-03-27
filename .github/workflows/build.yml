@@ -3,7 +3,7 @@ name: Print Message
 on:
   push:
     branches:
-      - ivan_dev  # Cambia "main" por el nombre de tu rama principal si es diferente
+      - ivan_devops  # Cambia "main" por el nombre de tu rama principal si es diferente
 
 jobs:
   print_message:
