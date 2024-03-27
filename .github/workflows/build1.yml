@@ -1,0 +1,28 @@
+name: SSH to EC2 Instance and Remove Directory
+
+on:
+  push:
+    branches:
+      - main  # Cambia "main" por el nombre de tu rama principal si es diferente
+
+jobs:
+  ssh_to_ec2_and_remove_dir:
+    runs-on: ubuntu-latest
+
+    env:
+      SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_COMPRAS }}
+      REMOTE_USER: ec2-user
+      REMOTE_HOST: ${{ secrets.AWS_DEV_HOST_COMPRAS }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: SSH into EC2 Instance and Remove Directory
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          sudo rm -rf /opt/montoto || true
