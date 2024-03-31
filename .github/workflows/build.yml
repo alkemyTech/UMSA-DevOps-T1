@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Print a message
-      run: echo "Working!"
+      run: echo "Working!" ${{ env.REMOTE_HOST }}
