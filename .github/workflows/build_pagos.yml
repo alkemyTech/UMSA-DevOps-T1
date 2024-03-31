@@ -11,7 +11,7 @@ jobs:
 
     env:
       SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_PAGOS }}
-      REMOTE_USER: ec2-user
+      REMOTE_USER: MS-pagos
       REMOTE_HOST: ${{ secrets.DIRECTION_IP_AWS_PAGOS }}
       GITHUB_TOKEN: ${{ secrets.MS_PAGOS_DEV }}
 
