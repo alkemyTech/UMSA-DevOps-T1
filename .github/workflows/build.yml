@@ -3,11 +3,16 @@ name: Print Message
 on:
   push:
     branches:
-      - ivan_devops  # Cambia "main" por el nombre de tu rama principal si es diferente
+      - ivan_devops
 
 jobs:
   print_message:
     runs-on: ubuntu-latest
+    env:
+      SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_COMPRAS }}
+      REMOTE_USER: ec2-user
+      REMOTE_HOST: ${{ secrets.AWS_DEV_HOST_COMPRAS }}
     steps:
-    - name: Print a message
-      run: echo "Working! ${{ env.REMOTE_HOST }}"
+      - name: Print a message
+        run: |
+          echo "Working! $REMOTE_HOST"
