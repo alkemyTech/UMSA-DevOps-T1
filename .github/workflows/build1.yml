@@ -6,23 +6,19 @@ on:
       - ivan_devops
 
 jobs:
-  ssh_to_ec2_and_remove_dir:
+  Deploy:
+    name: ssh_to_ec2_and_remove_dir
     runs-on: ubuntu-latest
 
-    env:
-      SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_COMPRAS }}
-      REMOTE_USER: ec2-user
-      REMOTE_HOST: ${{ secrets.AWS_DEV_HOST_COMPRAS }}
+
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
+    - uses: actions/checkout@v3
     - name: SSH into EC2 Instance and Remove Directory
-      uses: easingthemes/ssh-deploy@v4.0.5
-      with:
-        host: ${{ env.REMOTE_HOST }}
-        username: ${{ env.REMOTE_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          sudo rm -rf /opt/montoto || { echo "Directory removal failed"; exit 1; }
+      env:
+          SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_COMPRAS }}
+          REMOTE_USER: ec2-user
+          REMOTE_HOST: ${{ secrets.AWS_DEV_HOST_COMPRAS }}
+      run: |
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i SSH_PRIVATE_KEY ${REMOTE_USER}@${REMOTE_HOST}
