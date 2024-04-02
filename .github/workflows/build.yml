@@ -35,13 +35,3 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
           sudo mkdir -p /opt/compras
-
-    - name: Instalar Node.js, npm y Git
-      uses: appleboy/ssh-action@v2
-      with:
-        host: ${{ env.REMOTE_HOST }}
-        username: ${{ env.REMOTE_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          sudo apt update
-          sudo apt install -y nodejs npm git
