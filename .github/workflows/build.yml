@@ -45,3 +45,14 @@ jobs:
         script: |
           sudo apt update
           sudo apt install -y nodejs npm git
+
+    - name: Clonar repositorio
+      uses: cross-the-world/ssh-pipeline@v1.2.0
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        user: ${{ env.REMOTE_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          sudo git clone https://${{ secrets.SSH_PRIVATE_KEY }}@github.com/alkemyTech/UMSA-Softtek-DevOps-Base/tree/compras /opt/compras
+
+    
