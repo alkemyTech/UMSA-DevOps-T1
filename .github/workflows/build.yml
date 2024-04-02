@@ -20,7 +20,7 @@ jobs:
 
 
     - name: eliminar carpeta en caso de existir
-      uses: appleboy/ssh-action
+      uses: appleboy/ssh-action@master
       with:
         # ssh remote host
         host: ${{ env.REMOTE_HOST }}
