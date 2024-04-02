@@ -15,6 +15,10 @@ jobs:
       REMOTE_HOST: ${{ vars.AWS_DEV_HOST_COMPRAS }}
 
     steps:
+    - name: checkout
+      uses: actions/checkout@v4
+
+
     - name: eliminar carpeta en caso de existir
       uses: appleboy/ssh-action@v1.0.3
       with:
