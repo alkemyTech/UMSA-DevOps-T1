@@ -15,11 +15,14 @@ jobs:
       REMOTE_HOST: ${{ vars.AWS_DEV_HOST_COMPRAS }}
 
     steps:
-    - name: install packages
-      uses: appleboy/ssh-action@2.314.1
+    - name: ssh-pipeline
+      uses: cross-the-world/ssh-pipeline@v1.2.0
       with:
+        # ssh remote host
         host: ${{ env.REMOTE_HOST }}
-        username: ${{ env.REMOTE_USER }}
+        # ssh remote user
+        user: ${{ env.REMOTE_USER }}
+        # content of ssh private key. ex raw content of ~/.ssh/id_rsa
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
           sudo yum update -y
