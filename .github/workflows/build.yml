@@ -55,4 +55,31 @@ jobs:
         script: |
           sudo git clone https://${{ secrets.SSH_PRIVATE_KEY }}@github.com/alkemyTech/UMSA-Softtek-DevOps-Base/tree/compras /opt/compras
 
+    - name: Instalar paquetes NPM
+      uses: cross-the-world/ssh-pipeline@v1.2.0
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        user: ${{ env.REMOTE_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          cd /opt/compras
+          sudo npm install express pm2
+
+    - name: Iniciar servicio Node con PM2
+      uses: cross-the-world/ssh-pipeline@v1.2.0
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        user: ${{ env.REMOTE_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          cd /opt/compras
+          sudo pm2 start app.js
     
+    - name: Chequear si la aplicación está corriendo
+      uses: cross-the-world/ssh-pipeline@v1.2.0
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        user: ${{ env.REMOTE_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          sudo pm2 status myapp
