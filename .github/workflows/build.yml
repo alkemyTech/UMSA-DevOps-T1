@@ -1,4 +1,4 @@
-name: Print Message
+name: SSH to EC2 Instance and Remove Directory
 
 on:
   push:
@@ -6,14 +6,20 @@ on:
       - ivan_devops
 
 jobs:
-  print_message:
+  deploy:
     runs-on: ubuntu-latest
+
     env:
       SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_COMPRAS }}
       REMOTE_USER: ec2-user
-      REMOTE_HOST: ${{ secrets.AWS_DEV_HOST_COMPRAS }}
-    steps:
-      - name: Print a message
-        run: |
-          echo "Working-! ${REMOTE_HOST}"
+      REMOTE_HOST: ${{ vars.AWS_DEV_HOST_COMPRAS }}
 
+    steps:
+    - name: install packages
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          sudo yum update -y
