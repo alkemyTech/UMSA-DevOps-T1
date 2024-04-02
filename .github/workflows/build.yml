@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - name: eliminar carpeta en caso de existir
-      uses: cross-the-world/ssh-pipeline@v1.2.0
+      uses: appleboy/ssh-action@v1.0.3
       with:
         # ssh remote host
         host: ${{ env.REMOTE_HOST }}
