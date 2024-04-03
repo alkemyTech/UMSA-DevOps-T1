@@ -18,71 +18,10 @@ jobs:
     - name: checkout
       uses: actions/checkout@v4
 
-
-    - name: eliminar carpeta en caso de existir
+    - name: Connect and write a message
       uses: appleboy/ssh-action@master
       with:
-        # ssh remote host
-        host: ${{ env.REMOTE_HOST }}
-        # ssh remote user
-        user: ${{ env.REMOTE_USER }}
-        # content of ssh private key. ex raw content of ~/.ssh/id_rsa
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: echo "el servicio esta en ejecucion."
-
-    - name: Crear la carpeta /opt/compras
-      uses: cross-the-world/ssh-pipeline@v1.2.0
-      with:
-        host: ${{ env.REMOTE_HOST }}
-        user: ${{ env.REMOTE_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          sudo mkdir -p /opt/compras
-
-    - name: Instalar Node.js, npm y Git
-      uses: cross-the-world/ssh-pipeline@v1.2.0
-      with:
-        host: ${{ env.REMOTE_HOST }}
-        username: ${{ env.REMOTE_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          sudo apt update
-          sudo apt install -y nodejs npm git
-
-    - name: Clonar repositorio
-      uses: cross-the-world/ssh-pipeline@v1.2.0
-      with:
-        host: ${{ env.REMOTE_HOST }}
-        user: ${{ env.REMOTE_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          sudo git clone https://${{ secrets.SSH_PRIVATE_KEY }}@github.com/alkemyTech/UMSA-Softtek-DevOps-Base/tree/compras /opt/compras
-
-    - name: Instalar paquetes NPM
-      uses: cross-the-world/ssh-pipeline@v1.2.0
-      with:
-        host: ${{ env.REMOTE_HOST }}
-        user: ${{ env.REMOTE_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          cd /opt/compras
-          sudo npm install express pm2
-
-    - name: Iniciar servicio Node con PM2
-      uses: cross-the-world/ssh-pipeline@v1.2.0
-      with:
-        host: ${{ env.REMOTE_HOST }}
-        user: ${{ env.REMOTE_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          cd /opt/compras
-          sudo pm2 start app.js
-    
-    - name: Chequear si la aplicación está corriendo
-      uses: cross-the-world/ssh-pipeline@v1.2.0
-      with:
-        host: ${{ env.REMOTE_HOST }}
-        user: ${{ env.REMOTE_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          sudo pm2 status myapp
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
+         script: echo "el servicio esta en ejecucion."
