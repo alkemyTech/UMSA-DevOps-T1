@@ -10,7 +10,7 @@ jobs:
   
       env:
         SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_PAGOS }}
-        REMOTE_USER: ec2-user
+        REMOTE_USER: ORG-PAGOS-DEV
         REMOTE_HOST: ${{ secrets.DIRECTION_IP_AWS_PAGOS }}
   
       steps:
@@ -20,35 +20,35 @@ jobs:
       - name: eliminar carpeta en caso de existir
         uses: appleboy/ssh-action@master
         with:
-           host: ${{env.REMOTE_HOST}}
-           username: ${{env.REMOTE_USER}}
-           key: ${{env.SSH_PRIVATE_KEY }}
+           host: ${{ env.REMOTE_HOST }}
+           username: ${{ env.REMOTE_USER }}
+           key: ${{ env.SSH_PRIVATE_KEY }}
            script: sudo rm -rf /opt/pagos || true
   
       - name: Crear la carpeta /opt/pagos
         uses: appleboy/ssh-action@master
         with:
-           host: ${{env.REMOTE_HOST}}
-           username: ${{env.REMOTE_USER}}
-           key: ${{env.SSH_PRIVATE_KEY }}
+           host: ${{ env.REMOTE_HOST }}
+           username: ${{ env.REMOTE_USER }}
+           key: ${{ env.SSH_PRIVATE_KEY }}
            script: |
             sudo mkdir -p /opt/pagos
   
       - name: Actualizar paquetes
         uses: appleboy/ssh-action@master
         with:
-           host: ${{env.REMOTE_HOST}}
-           username: ${{env.REMOTE_USER}}
-           key: ${{env.SSH_PRIVATE_KEY }}
+           host: ${{ env.REMOTE_HOST }}
+           username: ${{ env.REMOTE_USER }}
+           key: ${{ env.SSH_PRIVATE_KEY }}
            script: |
             sudo yum update
   
       - name: Instalar Node.js, npm y Git
         uses: appleboy/ssh-action@master
         with:
-           host: ${{env.REMOTE_HOST}}
-           username: ${{env.REMOTE_USER}}
-           key: ${{env.SSH_PRIVATE_KEY }}
+           host: ${{ env.REMOTE_HOST }}
+           username: ${{ env.REMOTE_USER }}
+           key: ${{ env.SSH_PRIVATE_KEY }}
            script: |
             sudo yum update
             sudo yum install -y nodejs npm git
@@ -56,9 +56,9 @@ jobs:
       - name: Clonar repositorio
         uses: appleboy/ssh-action@master
         with:
-           host: ${{env.REMOTE_HOST}}
-           username: ${{env.REMOTE_USER}}
-           key: ${{env.SSH_PRIVATE_KEY }}
+           host: ${{ env.REMOTE_HOST }}
+           username: ${{ env.REMOTE_USER }}
+           key: ${{ env.SSH_PRIVATE_KEY }}
            script: |
             sudo git clone -b pagos https://github.com/alkemyTech/UMSA-Softtek-DevOps-Base.git /opt/pagos
   
@@ -66,9 +66,9 @@ jobs:
       - name: Instalar express
         uses: appleboy/ssh-action@master
         with:
-           host: ${{env.REMOTE_HOST}}
-           username: ${{env.REMOTE_USER}}
-           key: ${{env.SSH_PRIVATE_KEY }}
+           host: ${{ env.REMOTE_HOST }}
+           username: ${{ env.REMOTE_USER }}
+           key: ${{ env.SSH_PRIVATE_KEY }}
            script: |
             cd /opt/pagos
             sudo npm install express --save
@@ -76,9 +76,9 @@ jobs:
       - name: Instalar pm2
         uses: appleboy/ssh-action@master
         with:
-           host: ${{env.REMOTE_HOST}}
-           username: ${{env.REMOTE_USER}}
-           key: ${{env.SSH_PRIVATE_KEY }}
+           host: ${{ env.REMOTE_HOST }}
+           username: ${{ env.REMOTE_USER }}
+           key: ${{ env.SSH_PRIVATE_KEY }}
            script: |
             cd /opt/pagos
             sudo npm install -g pm2
@@ -97,9 +97,9 @@ jobs:
       - name: Iniciar servicio Node con PM2
         uses: appleboy/ssh-action@master
         with:
-           host: ${{env.REMOTE_HOST}}
-           username: ${{env.REMOTE_USER}}
-           key: ${{env.SSH_PRIVATE_KEY }}
+           host: ${{ env.REMOTE_HOST }}
+           username: ${{ env.REMOTE_USER }}
+           key: ${{ env.SSH_PRIVATE_KEY }}
            script: |
             cd /opt/pagos
             sudo pm2 start app.js
@@ -107,17 +107,17 @@ jobs:
       - name: Chequear si la aplicación está corriendo
         uses: appleboy/ssh-action@master
         with:
-           host: ${{env.REMOTE_HOST}}
-           username: ${{env.REMOTE_USER}}
-           key: ${{env.SSH_PRIVATE_KEY }}
+           host: ${{ env.REMOTE_HOST }}
+           username: ${{ env.REMOTE_USER }}
+           key: ${{ env.SSH_PRIVATE_KEY }}
            script: |
             sudo pm2 status myapp
   
       - name: Mostrar informacion de la pagina
         uses: appleboy/ssh-action@master
         with:
-           host: ${{env.REMOTE_HOST}}
-           username: ${{env.REMOTE_USER}}
-           key: ${{env.SSH_PRIVATE_KEY }}
+           host: ${{ env.REMOTE_HOST }}
+           username: ${{ env.REMOTE_USER }}
+           key: ${{ env.SSH_PRIVATE_KEY }}
            script: |
             sudo curl localhost:3000
