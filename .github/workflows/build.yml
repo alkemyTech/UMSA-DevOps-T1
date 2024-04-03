@@ -25,3 +25,12 @@ jobs:
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
          script: echo "el servicio esta en ejecucion."
+
+    - name: Crear la carpeta /opt/compras
+      uses: appleboy/ssh-action@master
+      with:
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
+         script: |
+          sudo mkdir -p /opt/compras
