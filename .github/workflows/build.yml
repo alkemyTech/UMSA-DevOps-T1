@@ -28,8 +28,7 @@ jobs:
         user: ${{ env.REMOTE_USER }}
         # content of ssh private key. ex raw content of ~/.ssh/id_rsa
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          sudo rm -rf /opt/compras || true
+        script: echo "el servicio esta en ejecucion."
 
     - name: Crear la carpeta /opt/compras
       uses: cross-the-world/ssh-pipeline@v1.2.0
