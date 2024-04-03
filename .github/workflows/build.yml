@@ -100,4 +100,4 @@ jobs:
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
-          sudo curl ${{env.REMOTE_HOST}}:3000
+          sudo curl localhost:3000
