@@ -1,0 +1,24 @@
+name: SSH to EC2 Instance
+
+on:
+  push:
+    branches:
+      - ivan_devops
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      SSH_PRIVATE_KEY: ${{ vars.key_compras }}
+      REMOTE_USER: ec2-user
+      REMOTE_HOST: ${{ vars.AWS_DEV_HOST_COMPRAS }}
+
+    steps:
+      - name: Connect and write a message
+        uses: appleboy/ssh-action@master
+        with:
+           host: ${{env.REMOTE_HOST}}
+           username: ${{env.REMOTE_USER}}
+           key: ${{env.SSH_PRIVATE_KEY }}
+           script: echo "el servicio esta en ejecucion."
