@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      SSH_PRIVATE_KEY: ${{ vars.key_compras }}
+      SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_COMPRAS }}
       REMOTE_USER: ec2-user
       REMOTE_HOST: ${{ vars.AWS_DEV_HOST_COMPRAS }}
 
