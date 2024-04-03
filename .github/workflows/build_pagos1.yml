@@ -4,7 +4,7 @@ on:
       branches:
         - santiagocenturion_pagos
   
-  jobs:
+jobs:
     deploy:
       runs-on: ubuntu-latest
   
