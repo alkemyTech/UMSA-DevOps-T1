@@ -1,89 +1,52 @@
-name: SSH--EC2
+name: Deploy App Node.js to EC2 
+
+# Trigger
 on:
-    push:
-      branches:
-        - santiagocenturion_pagos
-  
+  push:
+    branches:
+      - santiagocenturion_pagos
+
 jobs:
-    deploy:
-      runs-on: ubuntu-latest
-  
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_PAGOS }}
-        REMOTE_USER: ORG-PAGOS-DEV
-        REMOTE_HOST: ${{ secrets.DIRECTION_IP_AWS_PAGOS }}
-  
-      steps:
-      - name: checkout
-        uses: actions/checkout@v4
-  
-      - name: eliminar carpeta en caso de existir
+  deploy:
+    runs-on: ubuntu-latest
+    # Variables de entorno
+    env:
+      SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_PAGOS }}
+      REMOTE_USER: ec2-user
+      REMOTE_HOST: ${{ secrets.DIRECTION_IP_AWS_PAGOS }}
+      GITHUB_TOKEN: ${{ secrets.MS_PAGOS_DEV }}
+      APP_NAME: app.js
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Install packages Nodejs Npm Git
+      - name: Install Packages
         uses: appleboy/ssh-action@master
         with:
-           host: ${{ env.REMOTE_HOST }}
-           username: ${{ env.REMOTE_USER }}
-           key: ${{ env.SSH_PRIVATE_KEY }}
-           script: sudo rm -rf /opt/pagos || true
-  
-      - name: Crear la carpeta /opt/pagos
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            sudo yum update -y
+            sudo yum install nodejs npm git -y
+           
+     
+      # Create a Directory
+      - name: Create a Directory
         uses: appleboy/ssh-action@master
         with:
-           host: ${{ env.REMOTE_HOST }}
-           username: ${{ env.REMOTE_USER }}
-           key: ${{ env.SSH_PRIVATE_KEY }}
-           script: |
-            sudo mkdir -p /opt/pagos
-  
-      - name: Actualizar paquetes
-        uses: appleboy/ssh-action@master
-        with:
-           host: ${{ env.REMOTE_HOST }}
-           username: ${{ env.REMOTE_USER }}
-           key: ${{ env.SSH_PRIVATE_KEY }}
-           script: |
-            sudo yum update
-  
-      - name: Instalar Node.js, npm y Git
-        uses: appleboy/ssh-action@master
-        with:
-           host: ${{ env.REMOTE_HOST }}
-           username: ${{ env.REMOTE_USER }}
-           key: ${{ env.SSH_PRIVATE_KEY }}
-           script: |
-            sudo yum update
-            sudo yum install -y nodejs npm git
-  
-      - name: Clonar repositorio
-        uses: appleboy/ssh-action@master
-        with:
-           host: ${{ env.REMOTE_HOST }}
-           username: ${{ env.REMOTE_USER }}
-           key: ${{ env.SSH_PRIVATE_KEY }}
-           script: |
-            sudo git clone -b pagos https://github.com/alkemyTech/UMSA-Softtek-DevOps-Base.git /opt/pagos
-  
-  
-      - name: Instalar express
-        uses: appleboy/ssh-action@master
-        with:
-           host: ${{ env.REMOTE_HOST }}
-           username: ${{ env.REMOTE_USER }}
-           key: ${{ env.SSH_PRIVATE_KEY }}
-           script: |
-            cd /opt/pagos
-            sudo npm install express --save
-  
-      - name: Instalar pm2
-        uses: appleboy/ssh-action@master
-        with:
-           host: ${{ env.REMOTE_HOST }}
-           username: ${{ env.REMOTE_USER }}
-           key: ${{ env.SSH_PRIVATE_KEY }}
-           script: |
-            cd /opt/pagos
-            sudo npm install -g pm2
-  
-      - name: Detener servicio Node con PM2 si está en ejecución
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            sudo rm -rf /opt/pagos || true
+            cd /opt
+            sudo mkdir -p pagos
+
+      # Execute git clone
+      - name: Clone repository
         uses: appleboy/ssh-action@master
         with:
           host: ${{ env.REMOTE_HOST }}
@@ -91,33 +54,43 @@ jobs:
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
             cd /opt/pagos
-            sudo pm2 stop app.js || true  
-  
-  
-      - name: Iniciar servicio Node con PM2
+            sudo git clone https://${{ secrets.MS_PAGOS_DEV }}@github.com/santicenturion/UMSA-DevOps-T1
+
+      # Install npm packages express pm2
+      - name: Install npm packages
         uses: appleboy/ssh-action@master
         with:
-           host: ${{ env.REMOTE_HOST }}
-           username: ${{ env.REMOTE_USER }}
-           key: ${{ env.SSH_PRIVATE_KEY }}
-           script: |
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
             cd /opt/pagos
-            sudo pm2 start app.js
-      
-      - name: Chequear si la aplicación está corriendo
+            sudo npm install -g express pm2
+
+      # Start service
+      - name: Start Service
         uses: appleboy/ssh-action@master
         with:
-           host: ${{ env.REMOTE_HOST }}
-           username: ${{ env.REMOTE_USER }}
-           key: ${{ env.SSH_PRIVATE_KEY }}
-           script: |
-            sudo pm2 status myapp
-  
-      - name: Mostrar informacion de la pagina
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/pagos
+            sudo pm2 delete app.js || true
+            sudo pm2 start app.js --name 'app.js'
+
+      # Check if app is running
+      - name: Check if app is running
         uses: appleboy/ssh-action@master
         with:
-           host: ${{ env.REMOTE_HOST }}
-           username: ${{ env.REMOTE_USER }}
-           key: ${{ env.SSH_PRIVATE_KEY }}
-           script: |
-            sudo curl localhost:3000
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            # if sudo pm2 status | grep -q  '${{ env.APP_NAME }}'; then --> otra opción
+            if sudo pm2 ls | grep -q  '${{ env.APP_NAME }}'; then 
+            echo "El servicio ${{ env.APP_NAME }} está en ejecución."
+            else
+            echo "El servicio ${{ env.APP_NAME }} no está en ejecución."
+            exit 1
+            fi
