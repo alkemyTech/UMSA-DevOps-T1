@@ -63,7 +63,7 @@ jobs:
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
           cd /opt/compras
-          sudo npm install express pm2
+          sudo npm install pm2 express --save
 
     - name: Iniciar servicio Node con PM2
       uses: appleboy/ssh-action@master
