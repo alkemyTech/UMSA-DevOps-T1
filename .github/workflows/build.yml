@@ -52,7 +52,8 @@ jobs:
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
-          sudo git clone https://${{ secrets.SSH_PRIVATE_KEY }}@github.com/alkemyTech/UMSA-Softtek-DevOps-Base/tree/compras /opt/compras
+          sudo git clone -b compras https://github.com/alkemyTech/UMSA-Softtek-DevOps-Base.git /opt/compras
+
 
     - name: Instalar paquetes NPM
       uses: appleboy/ssh-action@master
