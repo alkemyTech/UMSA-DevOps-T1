@@ -1,4 +1,4 @@
-name: proyecto final
+name: SSH to EC2 Instance
 
 on:
   push:
