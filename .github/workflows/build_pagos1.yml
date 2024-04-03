@@ -1,4 +1,4 @@
-name: SSH--EC2
+name: SSH-EC2
 on:
     push:
       branches:
