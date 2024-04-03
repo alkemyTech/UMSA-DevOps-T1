@@ -84,6 +84,17 @@ jobs:
           cd /opt/compras
           sudo npm install -g pm2
 
+    - name: Detener servicio Node con PM2 si está en ejecución
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          cd /opt/compras
+          sudo pm2 stop app.js || true  
+
+
     - name: Iniciar servicio Node con PM2
       uses: appleboy/ssh-action@master
       with:
