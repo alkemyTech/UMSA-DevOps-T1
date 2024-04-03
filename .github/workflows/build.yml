@@ -64,7 +64,7 @@ jobs:
           sudo git clone -b compras https://github.com/alkemyTech/UMSA-Softtek-DevOps-Base.git /opt/compras
 
 
-    - name: Instalar paquetes NPM
+    - name: Instalar express
       uses: appleboy/ssh-action@master
       with:
          host: ${{env.REMOTE_HOST}}
@@ -72,7 +72,17 @@ jobs:
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
           cd /opt/compras
-          sudo npm install pm2 express --save
+          sudo npm install express --save
+
+    - name: Instalar pm2
+      uses: appleboy/ssh-action@master
+      with:
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
+         script: |
+          cd /opt/compras
+          sudo npm install -g pm2
 
     - name: Iniciar servicio Node con PM2
       uses: appleboy/ssh-action@master
