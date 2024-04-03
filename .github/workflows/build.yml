@@ -42,8 +42,8 @@ jobs:
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
-          sudo apt update
-          sudo apt install -y nodejs npm git
+          sudo yum update
+          sudo yum install -y nodejs npm git
 
     - name: Clonar repositorio
       uses: appleboy/ssh-action@master
