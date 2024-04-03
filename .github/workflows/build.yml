@@ -18,7 +18,7 @@ jobs:
     - name: checkout
       uses: actions/checkout@v4
 
-    - name: Connect and write a message
+    - name: eliminar carpeta en caso de existir
       uses: appleboy/ssh-action@master
       with:
          host: ${{env.REMOTE_HOST}}
@@ -34,3 +34,51 @@ jobs:
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
           sudo mkdir -p /opt/compras
+
+    - name: Instalar Node.js, npm y Git
+      uses: appleboy/ssh-action@master
+      with:
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
+         script: |
+          sudo apt update
+          sudo apt install -y nodejs npm git
+
+    - name: Clonar repositorio
+      uses: appleboy/ssh-action@master
+      with:
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
+         script: |
+          sudo git clone https://${{ secrets.SSH_PRIVATE_KEY }}@github.com/alkemyTech/UMSA-Softtek-DevOps-Base/tree/compras /opt/compras
+
+    - name: Instalar paquetes NPM
+      uses: appleboy/ssh-action@master
+      with:
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
+         script: |
+          cd /opt/compras
+          sudo npm install express pm2
+
+    - name: Iniciar servicio Node con PM2
+      uses: appleboy/ssh-action@master
+      with:
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
+         script: |
+          cd /opt/compras
+          sudo pm2 start app.js
+    
+    - name: Chequear si la aplicación está corriendo
+      uses: appleboy/ssh-action@master
+      with:
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
+         script: |
+          sudo pm2 status myapp
