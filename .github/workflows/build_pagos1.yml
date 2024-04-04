@@ -1,4 +1,4 @@
-name: Deploy-App Node.js to EC2 
+name: Deploy--App Node.js to EC2 
 
 # Trigger
 on:
@@ -14,7 +14,7 @@ jobs:
       SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_PAGOS }}
       REMOTE_USER: ec2-user
       REMOTE_HOST: ${{ secrets.DIRECTION_IP_AWS_PAGOS }}
-      GITHUB_TOKEN: ${{ secrets.MS_PAGOS_DEV }}
+      GITHUB_TOKEN: ${{ secrets.TOKEN_PAGOS }}
       APP_NAME: app.js
 
     steps:
