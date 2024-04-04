@@ -1,0 +1,95 @@
+name: Deploy App Auditoria
+
+# Trigger.
+on:
+  push:
+    branches:
+      - auditoria_dev_am
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Variables de entorno.
+    env:
+      SSH_PRIVATE_KEY: ${{ secrets.PEM_AUDITORIA }}
+      REMOTE_USER: ec2-user
+      REMOTE_HOST: ${{ secrets.HOST_AUDITORIA_AWS }}
+      GITHUB_TOKEN: ${{ secrets.TOKEN_AUDITORIA }}
+      APP_NAME: app.js
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Install packages Nodejs Npm Git
+      - name: Install Packages
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            sudo yum update -y
+            sudo yum install nodejs npm git -y
+
+      # Create a Directory
+      - name: Create a Directory
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            sudo rm -rf /opt/auditoria_dev || true
+            cd /opt
+            sudo mkdir -p auditoria_dev
+
+      # Execute git clone.
+      - name: Clone repository
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/auditoria_dev
+            sudo git clone -b auditoria_dev_am https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/auditoria_dev
+
+      # Install npm packages express pm2.
+      - name: Install npm packages
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/auditoria_dev
+            sudo npm install -g express pm2
+
+      # Start service
+      - name: Start Service
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/auditoria_dev
+            sudo pm2 delete app.js || true
+            sudo pm2 start app.js --name 'app.js'
+
+      # Check if app is running
+      - name: Check if app is running
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            # if sudo pm2 status | grep -q  '${{ env.APP_NAME }}'; then --> otra opción
+            if sudo pm2 ls | grep -q  '${{ env.APP_NAME }}'; then
+            echo "El servicio ${{ env.APP_NAME }} está en ejecución."
+            else
+            echo "El servicio ${{ env.APP_NAME }} no está en ejecución."
+            exit 1
+            fi
