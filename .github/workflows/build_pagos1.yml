@@ -54,7 +54,7 @@ jobs:
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
             cd /opt/pagos
-            sudo git clone https://${{ secrets.MS_PAGOS_DEV }}@github.com/santicenturion/UMSA-DevOps-T1
+            sudo git clone -b compras https://github.com/alkemyTech/UMSA-Softtek-DevOps-Base.git /opt/pagos
 
       # Install npm packages express pm2
       - name: Install npm packages
