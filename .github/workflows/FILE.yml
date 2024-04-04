@@ -4,7 +4,7 @@ name: Deploy App Cobranzas
 on:
   push:
     branches:
-      - amiloro_devops
+      - cobranzas_dev_am
 
 jobs:
   deploy:
