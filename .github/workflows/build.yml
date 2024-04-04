@@ -3,7 +3,7 @@ name: proyecto final
 on:
   push:
     branches:
-      - ivan_devops
+      - ileal_compras
 
 jobs:
   deploy:
