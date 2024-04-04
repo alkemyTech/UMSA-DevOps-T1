@@ -53,7 +53,7 @@ jobs:
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
             cd /opt/cobranzas_dev
-            sudo git clone -b cobranzas https://github.com/alkemyTech/UMSA-Softtek-DevOps-cobranzas.git /opt/cobranzas_dev
+            sudo git clone -b cobranzas_dev_am https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/cobranzas_dev
 
       # Install npm packages express pm2.
       - name: Install npm packages
