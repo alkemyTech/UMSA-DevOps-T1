@@ -10,9 +10,9 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_COMPRAS }}
+      SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_CLIENTES }}
       REMOTE_USER: ec2-user
-      REMOTE_HOST: ${{ vars.AWS_DEV_HOST_COMPRAS }}
+      REMOTE_HOST: ${{ vars.AWS_DEV_HOST_CLIENTES }}
 
     steps:
     - name: checkout
@@ -24,16 +24,16 @@ jobs:
          host: ${{env.REMOTE_HOST}}
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
-         script: sudo rm -rf /opt/compras || true
+         script: sudo rm -rf /opt/clientes || true
 
-    - name: Crear la carpeta /opt/compras
+    - name: Crear la carpeta /opt/clientes
       uses: appleboy/ssh-action@master
       with:
          host: ${{env.REMOTE_HOST}}
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
-          sudo mkdir -p /opt/compras
+          sudo mkdir -p /opt/clientes
 
     - name: Actualizar paquetes
       uses: appleboy/ssh-action@master
@@ -61,7 +61,7 @@ jobs:
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
-          sudo git clone -b compras https://github.com/alkemyTech/UMSA-Softtek-DevOps-Base.git /opt/compras
+          sudo git clone -b clientes https://github.com/alkemyTech/UMSA-Softtek-DevOps-Base.git /opt/clientes
 
 
     - name: Instalar express
@@ -71,7 +71,7 @@ jobs:
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
-          cd /opt/compras
+          cd /opt/clientes
           sudo npm install express --save
 
     - name: Instalar pm2
@@ -81,7 +81,7 @@ jobs:
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
-          cd /opt/compras
+          cd /opt/clientes
           sudo npm install -g pm2
 
     - name: Detener servicio Node con PM2 si está en ejecución
@@ -91,7 +91,7 @@ jobs:
         username: ${{ env.REMOTE_USER }}
         key: ${{ env.SSH_PRIVATE_KEY }}
         script: |
-          cd /opt/compras
+          cd /opt/clientes
           sudo pm2 stop app.js || true  
 
 
@@ -102,7 +102,7 @@ jobs:
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
-          cd /opt/compras
+          cd /opt/clientes
           sudo pm2 start app.js
     
     - name: Chequear si la aplicación está corriendo
