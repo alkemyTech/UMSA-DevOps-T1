@@ -54,7 +54,7 @@ jobs:
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
             cd /opt/Ventas_Dev
-            sudo git clone -b ventas https://github.com/alkemyTech/UMSA-Softtek-DevOps-Base.git /opt/ventas
+            sudo git clone -b ventas https://github.com/alkemyTech/UMSA-Softtek-DevOps-Base.git /opt/Ventas_Dev
 
       # Install npm packages express pm2
       - name: Install npm packages
