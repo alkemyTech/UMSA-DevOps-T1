@@ -1,0 +1,93 @@
+
+name: Deploy App Node.js to EC2 - CI Proveedores Dev
+
+# Trigger
+on:
+  push:
+    branches:
+      - proveedores_dev_pjb
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Variables de entorno
+    env:
+      SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_VENTAS_DEV }}
+      REMOTE_USER: ec2-user
+      REMOTE_HOST: ${{ vars.EC2_VENTAS_DEV }}
+      GITHUB_TOKEN: ${{ secrets.GH_TOKEN_VENTAS_DEV }}
+      APP_NAME: app.js
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Install packages Nodejs Npm Git
+      - name: Install Packages
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            sudo yum update -y
+            sudo yum install nodejs npm git -y
+           
+     
+      # Create a Directory
+      - name: Create a Directory
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            sudo rm -rf /opt/Proveedores_Dev || true
+            cd /opt
+            sudo mkdir -p Proveedores_Dev
+      # Execute git clone
+      - name: Clone repository
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/Proveedores_Dev
+            sudo git clone -b proveedores https://github.com/alkemyTech/UMSA-Softtek-DevOps-Base.git /opt/Proveedores_Dev
+      # Install npm packages express pm2
+      - name: Install npm packages
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/Ventas_Dev
+            sudo npm install -g express pm2
+      # Start service
+      - name: Start Service
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/Proveedores_Dev
+            sudo pm2 delete app.js || true
+            sudo pm2 start app.js --name 'app.js'
+      # Check if app is running
+      - name: Check if app is running
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            # if sudo pm2 status | grep -q  '${{ env.APP_NAME }}'; then --> otra opción
+            if sudo pm2 ls | grep -q  '${{ env.APP_NAME }}'; then 
+            echo "El servicio ${{ env.APP_NAME }} está en ejecución."
+            else
+            echo "El servicio ${{ env.APP_NAME }} no está en ejecución."
+            exit 1
+            fi
