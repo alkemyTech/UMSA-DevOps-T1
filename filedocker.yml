@@ -1,0 +1,55 @@
+filedocker.yml
+
+name: CI Pipeline for QA Environment
+
+on:
+  push:
+    branches:
+      - cobranzas_qa_am
+
+env:
+  DOCKER_IMAGE_NAME: cobranzas_qa
+  DOCKER_IMAGE_TAG: v1
+  EC2_HOST: ${{ secrets.HOST_COBRANZAS_QA }}
+  EC2_USERNAME: ec2-user
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME_COBRANZAS_QA }}
+  DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_COBRANZAS_QA }}
+  EC2_SSH_KEY: ${{ secrets.PEM_COBRANZAS }}
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get install docker.io -y
+          sudo systemctl start docker
+          sudo systemctl enable docker
+
+      - name: SSH into EC2 instance
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ${{ env.EC2_USERNAME }}
+          key: ${{ env.EC2_SSH_KEY }}
+          script: |
+            docker pull ${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
+            docker stop ${{ env.DOCKER_IMAGE_NAME }} || true
+            docker rm ${{ env.DOCKER_IMAGE_NAME }} || true
+            docker run -d --name ${{ env.DOCKER_IMAGE_NAME }} -p 3000:3000 ${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN_COBRANZAS_QA }}" | docker login -u ${{ env.DOCKERHUB_USERNAME }}
+
+      - name: Push Docker image to Docker Hub
+        run: docker push ${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
+
+      - name: Verify service is running
+        run: |
+          curl http://${{ env.EC2_HOST }}:3000
+
