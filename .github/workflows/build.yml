@@ -3,7 +3,7 @@ name: proyecto final
 on:
   push:
     branches:
-      - ileal_compras
+      - compras_qa_il
 
 jobs:
   deploy:
@@ -12,7 +12,7 @@ jobs:
     env:
       SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_COMPRAS }}
       REMOTE_USER: ec2-user
-      REMOTE_HOST: ${{ vars.AWS_DEV_HOST_COMPRAS }}
+      REMOTE_HOST: ${{ vars.AWS_DEV_HOST_COMPRAS_QA }}
       DOCKERHUB_USERNAME: ${{vars.DOCKERHUB_USERNAME}}
       DOCKERHUB_PASSWORD: ${{secrets.DOCKERHUB_PASSWORD}}
 
