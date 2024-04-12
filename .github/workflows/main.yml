@@ -19,6 +19,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Install Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get install docker.io -y
+          sudo systemctl start docker
+          sudo systemctl enable docker
+
       - name: SSH into EC2 instance and run Docker commands
         uses: appleboy/ssh-action@master
         with:
@@ -31,16 +38,6 @@ jobs:
             docker rm ${{ env.DOCKER_IMAGE_NAME }} || true
             docker run -d --name ${{ env.DOCKER_IMAGE_NAME }} -p 3000:3000 ${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
 
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Install Docker
-        run: |
-          sudo apt-get update
-          sudo apt-get install docker.io -y
-          sudo systemctl start docker
-          sudo systemctl enable docker
-
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKERHUB_TOKEN_COBRANZAS_QA }}" | docker login -u ${{ env.DOCKERHUB_USERNAME }}
 
@@ -50,3 +47,4 @@ jobs:
       - name: Verify service is running
         run: |
           curl http://${{ env.EC2_HOST }}:3000
+
