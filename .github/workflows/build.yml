@@ -13,6 +13,8 @@ jobs:
       SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_COMPRAS }}
       REMOTE_USER: ec2-user
       REMOTE_HOST: ${{ vars.AWS_DEV_HOST_COMPRAS }}
+      DOCKERHUB_USERNAME: ${{vars.DOCKERHUB_USERNAME}}
+      DOCKERHUB_PASSWORD: ${{secrets.DOCKERHUB_PASSWORD}}
 
     steps:
     - name: checkout
@@ -122,3 +124,21 @@ jobs:
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
           sudo curl localhost:3000
+
+    - name: Generar Imagen Docker
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: Dockerfile
+        push: false
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/compras_qa:latest
+
+    - name: Subir a DockerHub
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: Dockerfile
+        push: true
+        tags: your-dockerhub-username/your-image-name:latest
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_PASSWORD }}
