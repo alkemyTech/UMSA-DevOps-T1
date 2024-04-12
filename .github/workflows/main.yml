@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: SSH into EC2 instance
+      - name: SSH into EC2 instance and run Docker commands
         uses: appleboy/ssh-action@master
         with:
           host: ${{ env.EC2_HOST }}
