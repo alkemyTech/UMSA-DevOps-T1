@@ -131,7 +131,7 @@ jobs:
         context: .
         file: Dockerfile
         push: false
-        tags: ${{ secrets.DOCKERHUB_USERNAME }}/compras_qa:latest
+        tags: lealivan009/compras_qa:latest
 
     - name: Subir a DockerHub
       uses: docker/build-push-action@v2
