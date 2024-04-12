@@ -26,11 +26,10 @@ jobs:
           username: ${{ env.EC2_USERNAME }}
           key: ${{ env.EC2_SSH_KEY }}
           script: |
-            sudo apt-get update
-            sudo apt-get remove containerd.io -y
-            sudo apt-get install docker.io -y
+            sudo amazon-linux-extras install docker -y
             sudo systemctl start docker
             sudo systemctl enable docker
+
             docker pull ${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
             docker stop ${{ env.DOCKER_IMAGE_NAME }} || true
             docker rm ${{ env.DOCKER_IMAGE_NAME }} || true
