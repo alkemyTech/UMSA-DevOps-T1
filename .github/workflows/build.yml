@@ -126,7 +126,7 @@ jobs:
           sudo curl localhost:3000
 
     - name: Generar Imagen Docker
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v5.3.0
       with:
         context: .
         file: Dockerfile
@@ -134,7 +134,7 @@ jobs:
         tags: lealivan009/compras_qa:latest
 
     - name: Subir a DockerHub
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v5.3.0
       with:
         context: .
         file: Dockerfile
