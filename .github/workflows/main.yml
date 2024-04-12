@@ -19,13 +19,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install Docker
-        run: |
-          sudo apt-get update
-          sudo apt-get install docker.io -y
-          sudo systemctl start docker
-          sudo systemctl enable docker
-
       - name: SSH into EC2 instance and run Docker commands
         uses: appleboy/ssh-action@master
         with:
@@ -33,18 +26,12 @@ jobs:
           username: ${{ env.EC2_USERNAME }}
           key: ${{ env.EC2_SSH_KEY }}
           script: |
+            sudo apt-get update
+            sudo apt-get remove containerd.io -y
+            sudo apt-get install docker.io -y
+            sudo systemctl start docker
+            sudo systemctl enable docker
             docker pull ${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
             docker stop ${{ env.DOCKER_IMAGE_NAME }} || true
             docker rm ${{ env.DOCKER_IMAGE_NAME }} || true
             docker run -d --name ${{ env.DOCKER_IMAGE_NAME }} -p 3000:3000 ${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
-
-      - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKERHUB_TOKEN_COBRANZAS_QA }}" | docker login -u ${{ env.DOCKERHUB_USERNAME }}
-
-      - name: Push Docker image to Docker Hub
-        run: docker push ${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
-
-      - name: Verify service is running
-        run: |
-          curl http://${{ env.EC2_HOST }}:3000
-
