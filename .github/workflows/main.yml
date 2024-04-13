@@ -96,7 +96,8 @@ jobs:
               exit 1
             fi
 
-      - name: SSH into EC2 instance and run Docker commands
+      # Install Docker
+      - name: Install Docker
         uses: appleboy/ssh-action@master
         with:
           host: ${{ env.REMOTE_HOST }}
@@ -110,37 +111,19 @@ jobs:
 
             sudo usermod -aG docker $USER
             sudo usermod -aG docker ec2-user
- 
-      - name: Generar Imagen Docker
-        uses: docker/build-push-action@v5.3.0
-        with:
-          context: /opt/containerd
-          file: Dockerfile
-          push: false
-          tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
 
-      - name: Subir a DockerHub
-        uses: docker/build-push-action@v5.3.0
-        with:
-          context: /opt/containerd
-          file: Dockerfile
-          push: true
-          tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      # Build Docker image
+      - name: Build Docker Image
+        run: |
+          ssh -i $SSH_PRIVATE_KEY $REMOTE_USER@$REMOTE_HOST 'docker build -t $DOCKERHUB_USERNAME/cobranzas_qa:latest /opt/cobranzas_qa'
 
+      # Login to Docker Hub and push image
+      - name: Push Docker Image to Docker Hub
+        run: |
+          ssh -i $SSH_PRIVATE_KEY $REMOTE_USER@$REMOTE_HOST 'docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_TOKEN && docker push $DOCKERHUB_USERNAME/cobranzas_qa:latest'
+
+      # Deploy Docker Image to QA Environment
       - name: Deploy Docker Image to QA Environment
         run: |
-          # SSH into your EC2 instance
-          ssh -i $SSH_PRIVATE_KEY $REMOTE_USER@$REMOTE_HOST << 'EOF'
-            # Pull the latest Docker image from DockerHub
-            docker pull $DOCKERHUB_USERNAME/cobranzas_qa:latest
-
-            # Detener y eliminar el contenedor existente si existe
-            docker stop cobranzas_qa || true
-            docker rm cobranzas_qa || true
-
-            # Ejecutar un nuevo contenedor con la imagen recién descargada
-            docker run -d --name cobranzas_qa -p 8080:8080 $DOCKERHUB_USERNAME/cobranzas_qa:latest
-          EOF
+          ssh -i $SSH_PRIVATE_KEY $REMOTE_USER@$REMOTE_HOST 'docker pull $DOCKERHUB_USERNAME/cobranzas_qa:latest && docker stop cobranzas_qa || true && docker rm cobranzas_qa || true && docker run -d --name cobranzas_qa -p 8080:8080 $DOCKERHUB_USERNAME/cobranzas_qa:latest'
 
