@@ -1,12 +1,9 @@
 name: pipeline compras_qa
 
 on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Entorno de testing'
-        required: true
-        default: 'testing'
+  push:
+    branches:
+      - compras_qa_il
 
 jobs:
   deploy:
