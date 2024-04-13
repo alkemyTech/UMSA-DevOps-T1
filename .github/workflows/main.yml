@@ -42,9 +42,9 @@ jobs:
           username: ${{ env.REMOTE_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
-            sudo rm -rf /opt/containerd || true
+            sudo rm -rf /opt/cobranzas_qa || true
             cd /opt
-            sudo mkdir -p containerd
+            sudo mkdir -p cobranzas_qa
 
       # Execute git clone.
       - name: Clone repository
@@ -54,7 +54,7 @@ jobs:
           username: ${{ env.REMOTE_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
-            cd /opt/containerd
+            cd /opt/cobranzas_qa
             sudo git clone -b cobranzas_qa_am https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/cobranzas_qa
 
       # Install npm packages express pm2.
@@ -110,13 +110,11 @@ jobs:
 
             sudo usermod -aG docker $USER
             sudo usermod -aG docker ec2-user
-
-            sudo cd /opt/containerd
-            
+ 
       - name: Generar Imagen Docker
         uses: docker/build-push-action@v5.3.0
         with:
-          context: .
+          context: /opt/containerd
           file: Dockerfile
           push: false
           tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
@@ -124,7 +122,7 @@ jobs:
       - name: Subir a DockerHub
         uses: docker/build-push-action@v5.3.0
         with:
-          context: .
+          context: /opt/containerd
           file: Dockerfile
           push: true
           tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
