@@ -34,7 +34,7 @@ jobs:
             sudo yum update -y
             sudo yum install nodejs npm git -y
 
-      # Create a Directory
+      # Create a Directory.
       - name: Create a Directory
         uses: appleboy/ssh-action@master
         with:
