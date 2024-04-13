@@ -2,7 +2,7 @@
 FROM node:14
 
 # Establecer el directorio de trabajo dentro del contenedor
-WORKDIR /opt/compras
+WORKDIR /app
 
 # Copiar el package.json y el package-lock.json (si existe) al directorio de trabajo
 COPY package*.json ./
@@ -17,4 +17,5 @@ COPY . .
 EXPOSE 3000
 
 # Comando para ejecutar la aplicación
-CMD ["npm", "start"]
+CMD ["node", "/app/app.js"]
+
