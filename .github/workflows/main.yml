@@ -76,7 +76,7 @@ jobs:
           username: ${{ env.REMOTE_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
-            cd /opt/cobranzas_dev
+            cd /opt/cobranzas_qa
             sudo pm2 delete app.js || true
             sudo pm2 start app.js --name 'app.js'
 
