@@ -1,0 +1,13 @@
+name: prueba_manual
+
+# Configuración para activar la ejecución manualmente
+on:
+  workflow_dispatch:
+
+jobs:
+  mostrar_directorio:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Imprimir directorio actual
+      run: ls
