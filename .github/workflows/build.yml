@@ -14,7 +14,8 @@ jobs:
       REMOTE_USER: ec2-user
       REMOTE_HOST: ${{ vars.AWS_DEV_HOST_COMPRAS_QA }}
       DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME_COMPRAS_QA }}
-      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN_COMPRAS_QA }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD_COMPRAS_QA }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_COMPRAS_QA }}
 
     steps:
     - name: checkout
@@ -146,4 +147,4 @@ jobs:
         push: true
         tags: ${{ env.DOCKERHUB_USERNAME }}/compras_qa:latest
         username: ${{ env.DOCKERHUB_USERNAME }}
-        password: ${{ env.DOCKERHUB_PASSWORD }}
+        password: ${{ env.DOCKERHUB_TOKEN }}
