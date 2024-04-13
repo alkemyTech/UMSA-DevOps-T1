@@ -1,9 +1,12 @@
 name: pipeline compras_qa
 
 on:
-  push:
-    branches:
-      - compras_qa_il
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Entorno de qa'
+        required: true
+        default: 'qa'
 
 jobs:
   deploy:
@@ -136,7 +139,8 @@ jobs:
         push: false
         tags: ${{ env.DOCKERHUB_USERNAME }}/compras_qa:latest
 
-    - uses: docker/login-action@v3
+    - name: Iniciar sesion en docker hub
+      uses: docker/login-action@v3
       with:
         username: ${{ env.DOCKERHUB_USERNAME }}
         password: ${{ env.DOCKERHUB_PASSWORD }}
