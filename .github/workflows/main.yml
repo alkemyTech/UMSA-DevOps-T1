@@ -1,24 +1,101 @@
-name: CI Pipeline for QA Environment
+name: Deploy App Cobranzas
 
+# Trigger.
 on:
   push:
     branches:
       - cobranzas_qa_am
 
-env:
-  DOCKER_IMAGE_NAME: cobranzas_qa
-  DOCKER_IMAGE_TAG: v1
-  EC2_HOST: ${{ secrets.HOST_COBRANZAS_QA }}
-  EC2_USERNAME: ec2-user
-  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME_COBRANZAS_QA }}
-  DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_COBRANZAS_QA }}
-  EC2_SSH_KEY: ${{ secrets.PEM_COBRANZAS }}
-
 jobs:
-  build_and_deploy:
+  deploy:
     runs-on: ubuntu-latest
+    # Variables de entorno.
+    env:
+      SSH_PRIVATE_KEY: ${{ secrets.PEM_COBRANZAS_QA }}
+      REMOTE_USER: ec2-user
+      REMOTE_HOST: ${{ secrets.IP_COBRANZAS_QA }}
+      GITHUB_TOKEN: ${{ secrets.TOKEN_GH_AM }}
+      APP_NAME: app.js
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME_COBRANZAS_QA }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_COBRANZAS_QA }}
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Install packages Nodejs Npm Git
+      - name: Install Packages
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            sudo yum update -y
+            sudo yum install nodejs npm git -y
+
+      # Create a Directory
+      - name: Create a Directory
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            sudo rm -rf /opt/cobranzas_qa || true
+            cd /opt
+            sudo mkdir -p cobranzas_qa
+
+      # Execute git clone.
+      - name: Clone repository
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/cobranzas_qa
+            sudo git clone -b cobranzas_qa_am https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/cobranzas_qa
+
+      # Install npm packages express pm2.
+      - name: Install npm packages
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/cobranzas_dev
+            sudo npm install -g express pm2
+
+      # Start service
+      - name: Start Service
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/cobranzas_dev
+            sudo pm2 delete app.js || true
+            sudo pm2 start app.js --name 'app.js'
+
+      # Check if app is running
+      - name: Check if app is running
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            # if sudo pm2 status | grep -q  '${{ env.APP_NAME }}'; then --> otra opción
+            if sudo pm2 ls | grep -q  '${{ env.APP_NAME }}'; then
+            echo "El servicio ${{ env.APP_NAME }} está en ejecución."
+            else
+            echo "El servicio ${{ env.APP_NAME }} no está en ejecución."
+            exit 1
+            fi
+
       - name: SSH into EC2 instance and run Docker commands
         uses: appleboy/ssh-action@master
         with:
@@ -33,8 +110,21 @@ jobs:
 
             sudo usermod -aG docker $USER
             sudo usermod -aG docker ec2-user
+ 
+      - name: Generar Imagen Docker
+        uses: docker/build-push-action@v5.3.0
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          tags: agusmiloro/cobranzas_qa:latest
 
-            docker pull ${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
-            docker stop ${{ env.DOCKER_IMAGE_NAME }} || true
-            docker rm ${{ env.DOCKER_IMAGE_NAME }} || true
-            docker run -d --name ${{ env.DOCKER_IMAGE_NAME }} -p 3000:3000 ${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
+      - name: Subir a DockerHub
+        uses: docker/build-push-action@v5.3.0
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: agusmiloro/cobranzas_qa:latest
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
