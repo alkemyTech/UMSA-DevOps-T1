@@ -2,11 +2,6 @@ name: pipeline compras_qa
 
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Entorno de qa'
-        required: true
-        default: 'qa'
 
 jobs:
   deploy:
