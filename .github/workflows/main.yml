@@ -55,7 +55,7 @@ jobs:
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
             cd /opt/containerd
-            sudo git clone -b cobranzas_qa_am https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/containerd
+            sudo git clone -b cobranzas_qa_am https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/cobranzas_qa
 
       # Install npm packages express pm2.
       - name: Install npm packages
@@ -65,7 +65,7 @@ jobs:
           username: ${{ env.REMOTE_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
-            cd /opt/containerd
+            cd /opt/cobranzas_qa
             sudo npm install -g express pm2
 
       # Start service
@@ -76,7 +76,7 @@ jobs:
           username: ${{ env.REMOTE_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
-            cd /opt/containerd
+            cd /opt/cobranzas_qa
             sudo pm2 delete app.js || true
             sudo pm2 start app.js --name 'app.js'
 
@@ -110,11 +110,13 @@ jobs:
 
             sudo usermod -aG docker $USER
             sudo usermod -aG docker ec2-user
- 
+
+            cd /opt/cobranzas_qa
+            
       - name: Generar Imagen Docker
         uses: docker/build-push-action@v5.3.0
         with:
-          context: /opt
+          context: .
           file: Dockerfile
           push: false
           tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
@@ -122,7 +124,7 @@ jobs:
       - name: Subir a DockerHub
         uses: docker/build-push-action@v5.3.0
         with:
-          context: /opt
+          context: .
           file: Dockerfile
           push: true
           tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
@@ -143,3 +145,4 @@ jobs:
             # Ejecutar un nuevo contenedor con la imagen recién descargada
             docker run -d --name cobranzas_qa -p 8080:8080 $DOCKERHUB_USERNAME/cobranzas_qa:latest
           EOF
+
