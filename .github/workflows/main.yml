@@ -90,17 +90,17 @@ jobs:
           script: |
             # if sudo pm2 status | grep -q  '${{ env.APP_NAME }}'; then --> otra opción
             if sudo pm2 ls | grep -q  '${{ env.APP_NAME }}'; then
-            echo "El servicio ${{ env.APP_NAME }} está en ejecución."
+              echo "El servicio ${{ env.APP_NAME }} está en ejecución."
             else
-            echo "El servicio ${{ env.APP_NAME }} no está en ejecución."
-            exit 1
+              echo "El servicio ${{ env.APP_NAME }} no está en ejecución."
+              exit 1
             fi
 
       - name: SSH into EC2 instance and run Docker commands
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ env.REMOTE_HOST }}
-          username: ${{ env.REMOTE_USER }}
+          host: ${{ env.EC2_HOST }}
+          username: ${{ env.REMOTE_HOST }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
             sudo yum update -y
