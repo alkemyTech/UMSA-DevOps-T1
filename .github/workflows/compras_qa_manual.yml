@@ -1,4 +1,4 @@
-name: compras_qa
+name: compras_qa_manual
 
 # Configure Manual Trigger
 on:
