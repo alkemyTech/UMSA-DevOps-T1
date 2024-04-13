@@ -42,9 +42,9 @@ jobs:
           username: ${{ env.REMOTE_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
-            sudo rm -rf /opt/cobranzas_qa || true
+            sudo rm -rf /opt/containerd || true
             cd /opt
-            sudo mkdir -p cobranzas_qa
+            sudo mkdir -p containerd
 
       # Execute git clone.
       - name: Clone repository
@@ -54,8 +54,8 @@ jobs:
           username: ${{ env.REMOTE_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
-            cd /opt/cobranzas_qa
-            sudo git clone -b cobranzas_qa_am https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/cobranzas_qa
+            cd /opt/containerd
+            sudo git clone -b cobranzas_qa_am https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/containerd
 
       # Install npm packages express pm2.
       - name: Install npm packages
@@ -65,7 +65,7 @@ jobs:
           username: ${{ env.REMOTE_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
-            cd /opt/cobranzas_qa
+            cd /opt/containerd
             sudo npm install -g express pm2
 
       # Start service
@@ -76,7 +76,7 @@ jobs:
           username: ${{ env.REMOTE_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
-            cd /opt/cobranzas_qa
+            cd /opt/containerd
             sudo pm2 delete app.js || true
             sudo pm2 start app.js --name 'app.js'
 
@@ -143,4 +143,3 @@ jobs:
             # Ejecutar un nuevo contenedor con la imagen recién descargada
             docker run -d --name cobranzas_qa -p 8080:8080 $DOCKERHUB_USERNAME/cobranzas_qa:latest
           EOF
-
