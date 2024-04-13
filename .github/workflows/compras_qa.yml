@@ -1,5 +1,6 @@
 name: compras_qa
 
+# Configure Manual Trigger
 on:
   workflow_dispatch:
 
