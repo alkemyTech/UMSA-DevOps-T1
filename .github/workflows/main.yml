@@ -1,4 +1,4 @@
-name: Deploy App Cobranzas
+name: Deploy App Cobranzas.
 
 # Trigger.
 on:
@@ -9,21 +9,23 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Variables de entorno.
     env:
+    #Conexion ssh
       SSH_PRIVATE_KEY: ${{ secrets.PEM_COBRANZAS_QA }}
       REMOTE_USER: ec2-user
       REMOTE_HOST: ${{ secrets.IP_COBRANZAS_QA }}
       GITHUB_TOKEN: ${{ secrets.TOKEN_GH_AM }}
       APP_NAME: app.js
+    #Conexion dockerhub
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME_COBRANZAS_QA }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_COBRANZAS_QA }}
-      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD_AM }}
-
+      DOCKERHUB_PASSWORD:  ${{ secrets.DOCKERHUB_PASSWORD_AM }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Instalación de paquetes Node.js, npm y Git
+      # Install packages Nodejs Npm Git
       - name: Install Packages
         uses: appleboy/ssh-action@master
         with:
@@ -34,7 +36,7 @@ jobs:
             sudo yum update -y
             sudo yum install nodejs npm git -y
 
-      # Crear un directorio
+      # Create a Directory.
       - name: Create a Directory
         uses: appleboy/ssh-action@master
         with:
@@ -46,7 +48,7 @@ jobs:
             cd /opt
             sudo mkdir -p cobranzas_qa
 
-      # Clonar el repositorio Git
+      # Execute git clone.
       - name: Clone repository
         uses: appleboy/ssh-action@master
         with:
@@ -57,7 +59,7 @@ jobs:
             cd /opt/cobranzas_qa
             sudo git clone -b cobranzas_qa_am https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/cobranzas_qa
 
-      # Instalar paquetes npm express pm2
+      # Install npm packages express pm2.
       - name: Install npm packages
         uses: appleboy/ssh-action@master
         with:
@@ -68,7 +70,7 @@ jobs:
             cd /opt/cobranzas_qa
             sudo npm install -g express pm2
 
-      # Iniciar servicio
+      # Start service
       - name: Start Service
         uses: appleboy/ssh-action@master
         with:
@@ -80,7 +82,7 @@ jobs:
             sudo pm2 delete app.js || true
             sudo pm2 start app.js --name 'app.js'
 
-      # Verificar si la aplicación está en ejecución
+      # Check if app is running
       - name: Check if app is running
         uses: appleboy/ssh-action@master
         with:
@@ -88,57 +90,33 @@ jobs:
           username: ${{ env.REMOTE_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
+            # if sudo pm2 status | grep -q  '${{ env.APP_NAME }}'; then --> otra opción
             if sudo pm2 ls | grep -q  '${{ env.APP_NAME }}'; then
               echo "El servicio ${{ env.APP_NAME }} está en ejecución."
             else
               echo "El servicio ${{ env.APP_NAME }} no está en ejecución."
               exit 1
             fi
-
-      # Instalar Docker
-      - name: Install Docker
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ env.REMOTE_HOST }}
-          username: ${{ env.REMOTE_USER }}
-          key: ${{ env.SSH_PRIVATE_KEY }}
-          script: |
-            sudo yum update -y
-            sudo yum install docker -y
-            sudo systemctl start docker
-            sudo systemctl enable docker
-            sudo usermod -aG docker $USER
-            sudo usermod -aG docker ec2-user
-
-      # Copiar archivos desde la máquina remota al host local
-      - name: Copy files from remote machine
-        run: scp -r -i ${{ env.SSH_PRIVATE_KEY }} ${{ env.REMOTE_USER }}@${{ env.REMOTE_HOST }}:/opt/cobranzas_qa /tmp/cobranzas_qa
-
-      # Construir la imagen Docker utilizando los archivos copiados
-      - name: Build Docker Image
+            
+      # Generar imagen      
+      - name: Generar Imagen Docker
         uses: docker/build-push-action@v5.3.0
         with:
-          context: /tmp/cobranzas_qa
+          context: .
           file: Dockerfile
           push: false
           tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
 
-      # Eliminar los archivos copiados después de construir la imagen
-      - name: Remove temporary files
-        run: rm -rf /tmp/cobranzas_qa
-
-      # Iniciar sesión en Docker Hub
-      - name: Login to Docker Hub
+      - name: Iniciar sesion en docker hub
         uses: docker/login-action@v3
         with:
-          username: ${{ env.DOCKERHUB_USERNAME }}
-          password: ${{ env.DOCKERHUB_PASSWORD }}
-
-      # Subir imagen a Docker Hub
-      - name: Push Docker Image to Docker Hub
+           username: ${{ env.DOCKERHUB_USERNAME }}
+           password: ${{ env.DOCKERHUB_PASSWORD }}
+      # Subir imagen a dockerhub
+      - name: Subir a DockerHub
         uses: docker/build-push-action@v5.3.0
         with:
-          context: /tmp/cobranzas_qa
+          context: .
           file: Dockerfile
           push: true
           tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
