@@ -1,4 +1,4 @@
-name: pipeline compras_qa
+name: pipeline compras_qa v1
 
 on:
   workflow_dispatch:
