@@ -114,7 +114,7 @@ jobs:
       - name: Generar Imagen Docker
         uses: docker/build-push-action@v5.3.0
         with:
-          context: /opt/containerd
+          context: /opt
           file: Dockerfile
           push: false
           tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
@@ -122,7 +122,7 @@ jobs:
       - name: Subir a DockerHub
         uses: docker/build-push-action@v5.3.0
         with:
-          context: /opt/containerd
+          context: /opt
           file: Dockerfile
           push: true
           tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
