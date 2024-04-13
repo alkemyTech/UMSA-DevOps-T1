@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     # Variables de entorno.
     env:
-      SSH_PRIVATE_KEY: ${{ secrets.PEM_COBRANZAS }}
+      SSH_PRIVATE_KEY: ${{ secrets.PEM_COBRANZAS_DEV }}
       REMOTE_USER: ec2-user
-      REMOTE_HOST: ${{ secrets.HOST_COBRANZAS_AWS }}
-      GITHUB_TOKEN: ${{ secrets.TOKEN_COBRANZAS }}
+      REMOTE_HOST: ${{ secrets.IP_COBRANZAS_DEV }}
+      GITHUB_TOKEN: ${{ secrets.TOKEN_GH_AM }}
       APP_NAME: app.js
 
     steps:
