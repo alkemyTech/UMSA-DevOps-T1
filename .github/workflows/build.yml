@@ -13,8 +13,8 @@ jobs:
       SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_COMPRAS }}
       REMOTE_USER: ec2-user
       REMOTE_HOST: ${{ vars.AWS_DEV_HOST_COMPRAS_QA }}
-      DOCKERHUB_USERNAME: lealivan009
-      DOCKERHUB_PASSWORD: dckr_pat_Ns9WdCxbGH2nt0_0YW3oI1aPC5w
+      DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME_COMPRAS_QA }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN_COMPRAS_QA }}
 
     steps:
     - name: checkout
@@ -139,6 +139,6 @@ jobs:
         context: .
         file: Dockerfile
         push: true
-        tags: lealivan009/compras_qa:latest
+        tags: ${{ env.DOCKERHUB_USERNAME }}/compras_qa:latest
         username: ${{ env.DOCKERHUB_USERNAME }}
         password: ${{ env.DOCKERHUB_PASSWORD }}
