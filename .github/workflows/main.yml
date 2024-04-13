@@ -11,14 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     # Variables de entorno.
     env:
+    #Conexion ssh
       SSH_PRIVATE_KEY: ${{ secrets.PEM_COBRANZAS_QA }}
       REMOTE_USER: ec2-user
       REMOTE_HOST: ${{ secrets.IP_COBRANZAS_QA }}
       GITHUB_TOKEN: ${{ secrets.TOKEN_GH_AM }}
       APP_NAME: app.js
+    #Conexion dockerhub
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME_COBRANZAS_QA }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_COBRANZAS_QA }}
-
+      DOCKERHUB_PASSWORD:  ${{ secrets.DOCKERHUB_PASSWORD_AM }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -111,18 +113,28 @@ jobs:
 
             sudo usermod -aG docker $USER
             sudo usermod -aG docker ec2-user
+     
+      # Generar imagen      
+      - name: Generar Imagen Docker
+        uses: docker/build-push-action@v5.3.0
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
 
-      # Build Docker image
-      - name: Build Docker Image
-        run: |
-          ssh -i ${{ env.SSH_PRIVATE_KEY }} ${{ env.REMOTE_USER }}@${{ env.REMOTE_HOST }} 'docker build -t ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest /opt/cobranzas_qa'
-
-      # Login to Docker Hub and push image
-      - name: Push Docker Image to Docker Hub
-        run: |
-          ssh -i ${{ env.SSH_PRIVATE_KEY }} ${{ env.REMOTE_USER }}@${{ env.REMOTE_HOST }} 'docker login -u ${{ env.DOCKERHUB_USERNAME }} -p ${{ env.DOCKERHUB_TOKEN }} && docker push ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest'
-
-      # Deploy Docker Image to QA Environment
-      - name: Deploy Docker Image to QA Environment
-        run: |
-          ssh -i ${{ env.SSH_PRIVATE_KEY }} ${{ env.REMOTE_USER }}@${{ env.REMOTE_HOST }} 'docker pull ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest && docker stop cobranzas_qa || true && docker rm cobranzas_qa || true && docker run -d --name cobranzas_qa -p 8080:8080 ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest'
+      - name: Iniciar sesion en docker hub
+        uses: docker/login-action@v3
+        with:
+           username: ${{ env.DOCKERHUB_USERNAME }}
+           password: ${{ env.DOCKERHUB_PASSWORD }}
+      # Subir imagen a dockerhub
+      - name: Subir a DockerHub
+        uses: docker/build-push-action@v5.3.0
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
