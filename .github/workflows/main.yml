@@ -99,8 +99,8 @@ jobs:
       - name: SSH into EC2 instance and run Docker commands
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ env.EC2_HOST }}
-          username: ${{ env.REMOTE_HOST }}
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
             sudo yum update -y
