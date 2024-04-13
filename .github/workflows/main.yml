@@ -65,7 +65,7 @@ jobs:
           username: ${{ env.REMOTE_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
-            cd /opt/cobranzas_dev
+            cd /opt/cobranzas_qa
             sudo npm install -g express pm2
 
       # Start service
@@ -99,8 +99,8 @@ jobs:
       - name: SSH into EC2 instance and run Docker commands
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ env.EC2_HOST }}
-          username: ${{ env.REMOTE_HOST }}
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
             sudo yum update -y
@@ -117,7 +117,7 @@ jobs:
           context: .
           file: Dockerfile
           push: false
-          tags: agusmiloro/cobranzas_qa:latest
+          tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
 
       - name: Subir a DockerHub
         uses: docker/build-push-action@v5.3.0
@@ -125,7 +125,7 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: agusmiloro/cobranzas_qa:latest
+          tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
@@ -134,11 +134,15 @@ jobs:
           # SSH into your EC2 instance
           ssh -i $SSH_PRIVATE_KEY $REMOTE_USER@$REMOTE_HOST << 'EOF'
             # Pull the latest Docker image from DockerHub
-            docker pull agusmiloro/cobranzas_qa:latest
+            docker pull $DOCKERHUB_USERNAME/cobranzas_qa:latest
 
             # Detener y eliminar el contenedor existente si existe
             docker stop cobranzas_qa || true
             docker rm cobranzas_qa || true
+
+            # Ejecutar un nuevo contenedor con la imagen recién descargada
+            docker run -d --name cobranzas_qa -p 8080:8080 $DOCKERHUB_USERNAME/cobranzas_qa:latest
+          EOF
 
             # Ejecutar un nuevo contenedor con la imagen recién descargada
             docker run -d --name cobranzas_qa -p 8080:8080 agusmiloro/cobranzas_qa:latest
