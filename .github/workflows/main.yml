@@ -100,7 +100,7 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ env.EC2_HOST }}
-          username: ${{ env.REMOTE_USER }}
+          username: ${{ env.REMOTE_HOST }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
             sudo yum update -y
@@ -128,3 +128,18 @@ jobs:
           tags: agusmiloro/cobranzas_qa:latest
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Deploy Docker Image to QA Environment
+        run: |
+          # SSH into your EC2 instance
+          ssh -i $SSH_PRIVATE_KEY $REMOTE_USER@$REMOTE_HOST << 'EOF'
+            # Pull the latest Docker image from DockerHub
+            docker pull agusmiloro/cobranzas_qa:latest
+
+            # Detener y eliminar el contenedor existente si existe
+            docker stop cobranzas_qa || true
+            docker rm cobranzas_qa || true
+
+            # Ejecutar un nuevo contenedor con la imagen recién descargada
+            docker run -d --name cobranzas_qa -p 8080:8080 agusmiloro/cobranzas_qa:latest
+          EOF
