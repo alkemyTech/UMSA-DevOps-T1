@@ -1,0 +1,152 @@
+name: compras_qa_test
+
+# Configure Manual Trigger
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      #Conexion ssh
+      SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_COMPRAS }}
+      REMOTE_USER: ec2-user
+      REMOTE_HOST: ${{ vars.AWS_DEV_HOST_COMPRAS_QA }}
+      #Conexion dockerhub
+      DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME_COMPRAS_QA }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD_COMPRAS_QA }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_COMPRAS_QA }}
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+
+    - name: eliminar carpeta en caso de existir
+      uses: appleboy/ssh-action@master
+      with:
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
+         script: sudo rm -rf /opt/compras || true
+
+    - name: Crear la carpeta /opt/compras
+      uses: appleboy/ssh-action@master
+      with:
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
+         script: |
+          sudo mkdir -p /opt/compras
+
+    - name: Actualizar paquetes
+      uses: appleboy/ssh-action@master
+      with:
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
+         script: |
+          sudo yum update
+
+    - name: Instalar Node.js, npm y Git
+      uses: appleboy/ssh-action@master
+      with:
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
+         script: |
+          sudo yum update
+          sudo yum install -y nodejs npm git
+
+    - name: Clonar repositorio
+      uses: appleboy/ssh-action@master
+      with:
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
+         script: |
+          sudo git clone -b compras https://github.com/alkemyTech/UMSA-Softtek-DevOps-Base.git /opt/compras
+
+
+    - name: Instalar express
+      uses: appleboy/ssh-action@master
+      with:
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
+         script: |
+          cd /opt/compras
+          sudo npm install express --save
+
+    - name: Instalar pm2
+      uses: appleboy/ssh-action@master
+      with:
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
+         script: |
+          cd /opt/compras
+          sudo npm install -g pm2
+
+    - name: Detener servicio Node con PM2 si está en ejecución
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          cd /opt/compras
+          sudo pm2 stop app.js || true  
+
+
+    - name: Iniciar servicio Node con PM2
+      uses: appleboy/ssh-action@master
+      with:
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
+         script: |
+          cd /opt/compras
+          sudo pm2 start app.js
+    
+    - name: Chequear si la aplicación está corriendo
+      uses: appleboy/ssh-action@master
+      with:
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
+         script: |
+          sudo pm2 status myapp
+
+    - name: MOstrar informacion de la pagina
+      uses: appleboy/ssh-action@master
+      with:
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
+         script: |
+          sudo curl localhost:3000
+
+    - name: Generar Imagen Docker
+      uses: docker/build-push-action@v5.3.0
+      with:
+        context: .
+        file: Dockerfile
+        push: false
+        tags: ${{ env.DOCKERHUB_USERNAME }}/compras_qa:latest
+
+    - name: Iniciar sesion en docker hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ env.DOCKERHUB_USERNAME }}
+        password: ${{ env.DOCKERHUB_PASSWORD }}
+
+    - name: Subir a DockerHub
+      uses: docker/build-push-action@v5.3.0
+      with:
+        context: .
+        file: Dockerfile
+        push: true
+        tags: ${{ env.DOCKERHUB_USERNAME }}/compras_qa:latest
+        username: ${{ env.DOCKERHUB_USERNAME }}
+        password: ${{ env.DOCKERHUB_TOKEN }}
