@@ -13,8 +13,8 @@ jobs:
       SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_COMPRAS }}
       REMOTE_USER: ec2-user
       REMOTE_HOST: ${{ vars.AWS_DEV_HOST_COMPRAS_QA }}
-      DOCKERHUB_USERNAME: lealivan009
-      DOCKERHUB_PASSWORD: dckr_pat_BFzjOIHCkFWxwmNaDf8CH62vymg
+      DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME_COMPRAS_QA }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN_COMPRAS_QA }}
 
     steps:
     - name: checkout
@@ -132,6 +132,11 @@ jobs:
         file: Dockerfile
         push: false
         tags: lealivan009/compras_qa:latest
+
+    - uses: docker/login-action@v3
+      with:
+        username: ${{ env.DOCKERHUB_USERNAME }}
+        password: ${{ env.DOCKERHUB_PASSWORD }}
 
     - name: Subir a DockerHub
       uses: docker/build-push-action@v5.3.0
