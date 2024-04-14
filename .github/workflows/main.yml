@@ -1,9 +1,8 @@
-name: Deploy App Cobranzas.
+name: cobranzas_qa_manual
 
+# Configure Manual Trigger
 on:
-  push:
-    branches:
-      - cobranzas_qa_am
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -13,11 +12,11 @@ jobs:
       #Conexion ssh
       SSH_PRIVATE_KEY: ${{ secrets.PEM_COBRANZAS_QA }}
       REMOTE_USER: ec2-user
-      REMOTE_HOST: ${{ secrets.IP_COBRANZAS_QA }}
+      REMOTE_HOST: ${{ vars.IP_COBRANZAS_QA }}
       #Conexion dockerhub
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME_AM }}
-      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN_AM }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_PASSWORD_AM }}
+      DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME_AM }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD_AM }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_AM }}
 
     steps:
     - name: checkout
@@ -29,16 +28,16 @@ jobs:
          host: ${{env.REMOTE_HOST}}
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
-         script: sudo rm -rf /opt/cobranzas_qa || true
+         script: sudo rm -rf /opt/cobranzas || true
 
-    - name: Crear la carpeta /opt/cobranzas_qa
+    - name: Crear la carpeta /opt/cobranzas
       uses: appleboy/ssh-action@master
       with:
          host: ${{env.REMOTE_HOST}}
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
-          sudo mkdir -p cobranzas_qa
+          sudo mkdir -p /opt/cobranzas
 
     - name: Actualizar paquetes
       uses: appleboy/ssh-action@master
@@ -59,15 +58,14 @@ jobs:
           sudo yum update
           sudo yum install -y nodejs npm git
 
-    - name: Clone repository
+    - name: Clonar repositorio
       uses: appleboy/ssh-action@master
       with:
-         host: ${{ env.REMOTE_HOST }}
-         username: ${{ env.REMOTE_USER }}
-         key: ${{ env.SSH_PRIVATE_KEY }}
+         host: ${{env.REMOTE_HOST}}
+         username: ${{env.REMOTE_USER}}
+         key: ${{env.SSH_PRIVATE_KEY }}
          script: |
-          cd /opt/cobranzas_qa
-          sudo git clone -b cobranzas_qa_am https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/cobranzas_qa
+          sudo git clone -b cobranzas_qa_am https://github.com/alkemyTech/UMSA-Softtek-DevOps-Base.git /opt/cobranzas
 
 
     - name: Instalar express
@@ -77,7 +75,7 @@ jobs:
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
-          cd /opt/cobranzas_qa
+          cd /opt/cobranzas
           sudo npm install express --save
 
     - name: Instalar pm2
@@ -87,7 +85,7 @@ jobs:
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
-          cd /opt/cobranzas_qa
+          cd /opt/cobranzas
           sudo npm install -g pm2
 
     - name: Detener servicio Node con PM2 si está en ejecución
@@ -97,7 +95,7 @@ jobs:
         username: ${{ env.REMOTE_USER }}
         key: ${{ env.SSH_PRIVATE_KEY }}
         script: |
-          cd /opt/cobranzas_qa
+          cd /opt/cobranzas
           sudo pm2 stop app.js || true  
 
 
@@ -108,7 +106,7 @@ jobs:
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
-          cd /opt/cobranzas_qa
+          cd /opt/cobranzas
           sudo pm2 start app.js
     
     - name: Chequear si la aplicación está corriendo
@@ -120,7 +118,7 @@ jobs:
          script: |
           sudo pm2 status myapp
 
-    - name: Mostrar informacion de la pagina
+    - name: MOstrar informacion de la pagina
       uses: appleboy/ssh-action@master
       with:
          host: ${{env.REMOTE_HOST}}
