@@ -137,7 +137,10 @@ jobs:
             echo "EXPOSE 8080" >> Dockerfile
             echo "" >> Dockerfile
             echo 'CMD ["node", "app.js"]' >> Dockerfile
-
+            
+            # Otorgar permisos de escritura al Dockerfile
+            chmod u+w Dockerfile
+            
             # Construir la imagen Docker
             docker build -t cobranzas_qa:v1 .
 
