@@ -111,8 +111,7 @@ jobs:
             sudo systemctl start docker
             sudo systemctl enable docker
 
-            sudo usermod -aG docker $USER
-            sudo usermod -aG docker ec2-user
+            sudo usermod -aG ${{ env.REMOTE_USER }} 
 
       - name: Generar Imagen Docker
         uses: appleboy/ssh-action@master
@@ -126,8 +125,8 @@ jobs:
             echo "" >> Dockerfile
             echo "WORKDIR /app" >> Dockerfile
             echo "" >> Dockerfile
-            echo "COPY /opt/cobranzas_qa/package.json ." >> Dockerfile
-            echo "COPY /opt/cobranzas_qa/package-lock.json ." >> Dockerfile
+            echo "COPY package.json ." >> Dockerfile
+            echo "COPY package-lock.json ." >> Dockerfile
             echo "" >> Dockerfile
             echo "RUN npm install" >> Dockerfile
             echo "" >> Dockerfile
