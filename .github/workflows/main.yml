@@ -149,6 +149,6 @@ jobs:
         context: .
         file: Dockerfile
         push: true
-        tags: |
-          ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
-          ${{ env.DOCKERHUB_USERNAME }}:latest
+        tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
+        username: ${{ env.DOCKERHUB_USERNAME }}
+        password: ${{ env.DOCKERHUB_TOKEN }}
