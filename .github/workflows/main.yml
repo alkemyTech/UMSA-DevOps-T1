@@ -1,6 +1,5 @@
 name: Deploy App Cobranzas
 
-# Trigger.
 on:
   push:
     branches:
@@ -9,15 +8,13 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # Variables de entorno.
+    
     env:
-      # Conexion ssh
       SSH_PRIVATE_KEY: ${{ secrets.PEM_COBRANZAS_QA }}
       REMOTE_USER: ec2-user
       REMOTE_HOST: ${{ secrets.IP_COBRANZAS_QA }}
       GITHUB_TOKEN: ${{ secrets.TOKEN_GH_AM }}
       APP_NAME: app.js
-      # Conexion dockerhub
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME_AM }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_AM }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD_AM }}
@@ -26,7 +23,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Install packages Nodejs Npm Git
       - name: Install Packages
         uses: appleboy/ssh-action@master
         with:
@@ -37,7 +33,6 @@ jobs:
             sudo yum update -y
             sudo yum install nodejs npm git -y
 
-      # Create a Directory.
       - name: Create a Directory
         uses: appleboy/ssh-action@master
         with:
@@ -49,7 +44,6 @@ jobs:
             cd /opt
             sudo mkdir -p cobranzas_qa
 
-      # Execute git clone.
       - name: Clone repository
         uses: appleboy/ssh-action@master
         with:
@@ -60,7 +54,6 @@ jobs:
             cd /opt/cobranzas_qa
             sudo git clone -b cobranzas_qa_am https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/cobranzas_qa
 
-      # Install npm packages express pm2.
       - name: Install npm packages
         uses: appleboy/ssh-action@master
         with:
@@ -71,7 +64,6 @@ jobs:
             cd /opt/cobranzas_qa
             sudo npm install -g express pm2
 
-      # Start service
       - name: Start Service
         uses: appleboy/ssh-action@master
         with:
@@ -83,7 +75,6 @@ jobs:
             sudo pm2 delete app.js || true
             sudo pm2 start app.js --name 'app.js'
 
-      # Check if app is running
       - name: Check if app is running
         uses: appleboy/ssh-action@master
         with:
@@ -91,15 +82,14 @@ jobs:
           username: ${{ env.REMOTE_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
-            # if sudo pm2 status | grep -q  '${{ env.APP_NAME }}'; then --> otra opción
-            if sudo pm2 ls | grep -q  '${{ env.APP_NAME }}'; then
+            if sudo pm2 ls | grep -q '${{ env.APP_NAME }}'; then
               echo "El servicio ${{ env.APP_NAME }} está en ejecución."
             else
               echo "El servicio ${{ env.APP_NAME }} no está en ejecución."
               exit 1
             fi
 
-      - name: SSH into EC2 instance and run Docker commands
+      - name: SSH into EC2 instance and set up Docker
         uses: appleboy/ssh-action@master
         with:
           host: ${{ env.REMOTE_HOST }}
@@ -110,9 +100,8 @@ jobs:
             sudo yum install docker -y
             sudo systemctl start docker
             sudo systemctl enable docker
-
             sudo usermod -aG wheel ec2-user 
-            sudo chmod 644 /opt/cobranzas_qa/package.json /opt/cobranzas_qa/package-lock.json
+            sudo chmod -R u+w /opt/cobranzas_qa
 
       - name: Generar Imagen Docker
         uses: appleboy/ssh-action@master
@@ -121,48 +110,38 @@ jobs:
           username: ${{ env.REMOTE_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
-            # Especifica la ruta completa al Dockerfile
-            DOCKERFILE_PATH=/opt/cobranzas_qa/Dockerfile
+            if [ ! -f /opt/cobranzas_qa/Dockerfile ]; then
+              echo "Dockerfile not found."
+              exit 1
+            fi
 
-            # Cambiar al directorio donde se encuentra el Dockerfile
-            cd /opt/cobranzas_qa
+            echo "FROM node:14" > /opt/cobranzas_qa/Dockerfile
+            echo "" >> /opt/cobranzas_qa/Dockerfile
+            echo "WORKDIR /app" >> /opt/cobranzas_qa/Dockerfile
+            echo "" >> /opt/cobranzas_qa/Dockerfile
+            echo "COPY package.json ." >> /opt/cobranzas_qa/Dockerfile
+            echo "COPY package-lock.json ." >> /opt/cobranzas_qa/Dockerfile
+            echo "" >> /opt/cobranzas_qa/Dockerfile
+            echo "RUN npm install" >> /opt/cobranzas_qa/Dockerfile
+            echo "" >> /opt/cobranzas_qa/Dockerfile
+            echo "COPY . ." >> /opt/cobranzas_qa/Dockerfile
+            echo "" >> /opt/cobranzas_qa/Dockerfile
+            echo "EXPOSE 8080" >> /opt/cobranzas_qa/Dockerfile
+            echo "" >> /opt/cobranzas_qa/Dockerfile
+            echo 'CMD ["node", "app.js"]' >> /opt/cobranzas_qa/Dockerfile
 
-            # Generar el contenido del Dockerfile
-            echo "FROM node:14" > $DOCKERFILE_PATH
-            echo "" >> $DOCKERFILE_PATH
-            echo "WORKDIR /app" >> $DOCKERFILE_PATH
-            echo "" >> $DOCKERFILE_PATH
-            echo "COPY package.json ." >> $DOCKERFILE_PATH
-            echo "COPY package-lock.json ." >> $DOCKERFILE_PATH
-            echo "" >> $DOCKERFILE_PATH
-            echo "RUN npm install" >> $DOCKERFILE_PATH
-            echo "" >> $DOCKERFILE_PATH
-            echo "COPY . ." >> $DOCKERFILE_PATH
-            echo "" >> $DOCKERFILE_PATH
-            echo "EXPOSE 8080" >> $DOCKERFILE_PATH
-            echo "" >> $DOCKERFILE_PATH
-            echo 'CMD ["node", "app.js"]' >> $DOCKERFILE_PATH
-
-            # Otorgar permisos de escritura al Dockerfile
-            chmod u+w $DOCKERFILE_PATH
-
-            # Construir la imagen Docker
-            docker build -t cobranzas_qa:v1 -f $DOCKERFILE_PATH .
-
-            # Detener y eliminar el contenedor existente si existe
+            docker build -t cobranzas_qa:v1 /opt/cobranzas_qa
             docker stop cont_cobranzas_qa || true
             docker rm cont_cobranzas_qa || true
-
-            # Ejecutar el contenedor
             docker run -d --name cont_cobranzas_qa cobranzas_qa:v1
 
-      - name: Iniciar sesión en Docker Hub
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ env.DOCKERHUB_PASSWORD }}
 
-      - name: Subir a DockerHub
+      - name: Push to DockerHub
         uses: docker/build-push-action@v5.3.0
         with:
           context: .
@@ -172,11 +151,11 @@ jobs:
           username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ env.DOCKERHUB_TOKEN }}
 
-      - name: Detener y eliminar contenedor existente (si existe)
+      - name: Stop and remove existing container (if exists)
         run: |
           docker stop cobranzas_qa || true
           docker rm cobranzas_qa || true
 
-      - name: Ejecutar nuevo contenedor con la imagen recién descargada
+      - name: Run new container with the freshly pulled image
         run: |
-          docker run -d --name cobranzas_qa -p 8080:8080 agusmiloro/cobranzas_qa:v1
+          docker run -d --name cobranzas_qa -p 8080:8080 ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:v1
