@@ -2,7 +2,9 @@ name: cobranzas_qa_manual
 
 # Configure Manual Trigger
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - cobranzas_qa_am
 
 jobs:
   deploy:
