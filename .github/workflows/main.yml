@@ -122,6 +122,7 @@ jobs:
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
             # Generar el contenido del Dockerfile
+            cd /opt/cobranzas_qa
             echo "FROM node:14" > Dockerfile
             echo "" >> Dockerfile
             echo "WORKDIR /app" >> Dockerfile
