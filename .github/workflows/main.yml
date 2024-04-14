@@ -67,7 +67,7 @@ jobs:
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
-          sudo git clone -b cobranzas_qa_am https://github.com/alkemyTech/UMSA-Softtek-DevOps-Base.git /opt/cobranzas
+          sudo git clone -b cobranzas_qa_am https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/cobranzas
 
 
     - name: Instalar express
