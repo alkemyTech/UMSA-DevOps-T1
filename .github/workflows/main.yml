@@ -111,7 +111,7 @@ jobs:
             sudo systemctl start docker
             sudo systemctl enable docker
 
-            sudo usermod -aG docker ec2-user 
+            sudo usermod -aG sudo ec2-user 
 
       - name: Generar Imagen Docker
         uses: appleboy/ssh-action@master
