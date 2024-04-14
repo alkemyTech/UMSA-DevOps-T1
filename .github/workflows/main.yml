@@ -115,41 +115,43 @@ jobs:
             sudo chmod 644 /opt/cobranzas_qa/package.json /opt/cobranzas_qa/package-lock.json
             
       - name: Generar Imagen Docker
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ env.REMOTE_HOST }}
-          username: ${{ env.REMOTE_USER }}
-          key: ${{ env.SSH_PRIVATE_KEY }}
-          script: |
-            # Generar el contenido del Dockerfile
-            cd /opt/cobranzas_qa
-            echo "FROM node:14" > Dockerfile
-            echo "" >> Dockerfile
-            echo "WORKDIR /app" >> Dockerfile
-            echo "" >> Dockerfile
-            echo "COPY package.json ." >> Dockerfile
-            echo "COPY package-lock.json ." >> Dockerfile
-            echo "" >> Dockerfile
-            echo "RUN npm install" >> Dockerfile
-            echo "" >> Dockerfile
-            echo "COPY . ." >> Dockerfile
-            echo "" >> Dockerfile
-            echo "EXPOSE 8080" >> Dockerfile
-            echo "" >> Dockerfile
-            echo 'CMD ["node", "app.js"]' >> Dockerfile
-            
-            # Otorgar permisos de escritura al Dockerfile
-            chmod u+w Dockerfile
-            
-            # Construir la imagen Docker
-            docker build -t cobranzas_qa:v1 .
+  uses: appleboy/ssh-action@master
+  with:
+    host: ${{ env.REMOTE_HOST }}
+    username: ${{ env.REMOTE_USER }}
+    key: ${{ env.SSH_PRIVATE_KEY }}
+    script: |
+      # Especifica la ruta completa al Dockerfile
+      DOCKERFILE_PATH=/opt/cobranzas_qa/Dockerfile
 
-            # Detener y eliminar el contenedor existente si existe
-            docker stop cont_cobranzas_qa || true
-            docker rm cont_cobranzas_qa || true
+      # Generar el contenido del Dockerfile
+      echo "FROM node:14" > $DOCKERFILE_PATH
+      echo "" >> $DOCKERFILE_PATH
+      echo "WORKDIR /app" >> $DOCKERFILE_PATH
+      echo "" >> $DOCKERFILE_PATH
+      echo "COPY package.json ." >> $DOCKERFILE_PATH
+      echo "COPY package-lock.json ." >> $DOCKERFILE_PATH
+      echo "" >> $DOCKERFILE_PATH
+      echo "RUN npm install" >> $DOCKERFILE_PATH
+      echo "" >> $DOCKERFILE_PATH
+      echo "COPY . ." >> $DOCKERFILE_PATH
+      echo "" >> $DOCKERFILE_PATH
+      echo "EXPOSE 8080" >> $DOCKERFILE_PATH
+      echo "" >> $DOCKERFILE_PATH
+      echo 'CMD ["node", "app.js"]' >> $DOCKERFILE_PATH
 
-            # Ejecutar el contenedor
-            docker run -d --name cont_cobranzas_qa cobranzas_qa:v1
+      # Otorgar permisos de escritura al Dockerfile
+      chmod u+w $DOCKERFILE_PATH
+
+      # Construir la imagen Docker
+      docker build -t cobranzas_qa:v1 -f $DOCKERFILE_PATH .
+
+      # Detener y eliminar el contenedor existente si existe
+      docker stop cont_cobranzas_qa || true
+      docker rm cont_cobranzas_qa || true
+
+      # Ejecutar el contenedor
+      docker run -d --name cont_cobranzas_qa cobranzas_qa:v1
 
       - name: Iniciar sesión en Docker Hub
         uses: docker/login-action@v3
@@ -174,4 +176,4 @@ jobs:
 
       - name: Ejecutar nuevo contenedor con la imagen recién descargada
         run: |
-          docker run -d --name cobranzas_qa -p 8080:8080 agusmiloro/cobranzas_qa:v1 
+          docker run -d --name cobranzas_qa -p 8080:8080 agusmiloro/cobranzas_qa:v1  
