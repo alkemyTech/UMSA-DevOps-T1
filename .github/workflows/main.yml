@@ -11,16 +11,17 @@ jobs:
     runs-on: ubuntu-latest
     # Variables de entorno.
     env:
-    #Conexion ssh
+      #Conexion ssh
       SSH_PRIVATE_KEY: ${{ secrets.PEM_COBRANZAS_QA }}
       REMOTE_USER: ec2-user
       REMOTE_HOST: ${{ secrets.IP_COBRANZAS_QA }}
       GITHUB_TOKEN: ${{ secrets.TOKEN_GH_AM }}
       APP_NAME: app.js
-    #Conexion dockerhub
+      #Conexion dockerhub
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME_AM }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_AM }}
       DOCKERHUB_PASSWORD:  ${{ secrets.DOCKERHUB_PASSWORD_AM }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -97,15 +98,41 @@ jobs:
               echo "El servicio ${{ env.APP_NAME }} no está en ejecución."
               exit 1
             fi
-      - name: Generar Imagen Docker
-        uses: docker/build-push-action@v5.3.0
-        with:
-          context: .
-          file: Dockerfile
-          push: false
-          tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_im:v1
 
-      - name: Iniciar sesion en docker hub
+      - name: Generar Imagen Docker
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            # Generar el contenido del Dockerfile
+            echo "FROM node:14" > Dockerfile
+            echo "" >> Dockerfile
+            echo "WORKDIR /app" >> Dockerfile
+            echo "" >> Dockerfile
+            echo "COPY package.json ." >> Dockerfile
+            echo "COPY package-lock.json ." >> Dockerfile
+            echo "" >> Dockerfile
+            echo "RUN npm install" >> Dockerfile
+            echo "" >> Dockerfile
+            echo "COPY . ." >> Dockerfile
+            echo "" >> Dockerfile
+            echo "EXPOSE 8080" >> Dockerfile
+            echo "" >> Dockerfile
+            echo 'CMD ["node", "app.js"]' >> Dockerfile
+
+            # Construir la imagen Docker
+            docker build -t cobranzas_qa:v1 .
+
+            # Detener y eliminar el contenedor existente si existe
+            docker stop cont_cobranzas_qa || true
+            docker rm cont_cobranzas_qa || true
+
+            # Ejecutar el contenedor
+            docker run -d --name cont_cobranzas_qa cobranzas_qa:v1
+
+      - name: Iniciar sesión en Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ env.DOCKERHUB_USERNAME }}
@@ -117,7 +144,16 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_im:v1
+          tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:v1
           username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ env.DOCKERHUB_TOKEN }}
-            
+
+      - name: Detener y eliminar contenedor existente (si existe)
+        run: |
+          docker stop cobranzas_qa || true
+          docker rm cobranzas_qa || true
+
+      - name: Ejecutar nuevo contenedor con la imagen recién descargada
+        run: |
+          docker run -d --name cobranzas_qa -p 8080:8080 agusmiloro/cobranzas_qa:v1  
+
