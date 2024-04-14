@@ -112,7 +112,8 @@ jobs:
             sudo systemctl enable docker
 
             sudo usermod -aG wheel ec2-user 
-
+            sudo chmod 644 /opt/cobranzas_qa/package.json /opt/cobranzas_qa/package-lock.json
+            
       - name: Generar Imagen Docker
         uses: appleboy/ssh-action@master
         with:
