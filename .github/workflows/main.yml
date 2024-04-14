@@ -98,6 +98,21 @@ jobs:
               echo "El servicio ${{ env.APP_NAME }} no está en ejecución."
               exit 1
             fi
+     
+      - name: SSH into EC2 instance and run Docker commands
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            sudo yum update -y
+            sudo yum install docker -y
+            sudo systemctl start docker
+            sudo systemctl enable docker
+
+            sudo usermod -aG docker $USER
+            sudo usermod -aG docker ec2-user
 
       - name: Generar Imagen Docker
         uses: appleboy/ssh-action@master
@@ -155,5 +170,4 @@ jobs:
 
       - name: Ejecutar nuevo contenedor con la imagen recién descargada
         run: |
-          docker run -d --name cobranzas_qa -p 8080:8080 agusmiloro/cobranzas_qa:v1  
-
+          docker run -d --name cobranzas_qa -p 8080:8080 agusmiloro/cobranzas_qa:v1
