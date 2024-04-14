@@ -1,6 +1,6 @@
 name: cobranzas_qa_manual.
 
-# Configure Manual Trigger
+# Configure 
 on:
   push:
     branches:
@@ -151,4 +151,4 @@ jobs:
         push: true
         tags: |
           ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
-          ${{ vars.DOCKERHUB_USERNAME_AM }}:latest
+          ${{ env.DOCKERHUB_USERNAME }}:latest
