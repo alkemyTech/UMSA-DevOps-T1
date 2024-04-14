@@ -66,7 +66,7 @@ jobs:
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
-          sudo git clone -b compras https://github.com/alkemyTech/UMSA-Softtek-DevOps-Base.git /opt/cobranzas_qa
+          sudo git clone -b cobranzas_qa_am https://github.com/alkemyTech/UMSA-Softtek-DevOps-Base.git /opt/cobranzas_qa
 
 
     - name: Instalar express
@@ -76,7 +76,7 @@ jobs:
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
-          cd /opt/compras
+          cd /opt/cobranzas_qa
           sudo npm install express --save
 
     - name: Instalar pm2
@@ -86,7 +86,7 @@ jobs:
          username: ${{env.REMOTE_USER}}
          key: ${{env.SSH_PRIVATE_KEY }}
          script: |
-          cd /opt/compras
+          cd /opt/cobranzas_qa
           sudo npm install -g pm2
 
     - name: Detener servicio Node con PM2 si está en ejecución
@@ -96,7 +96,7 @@ jobs:
         username: ${{ env.REMOTE_USER }}
         key: ${{ env.SSH_PRIVATE_KEY }}
         script: |
-          cd /opt/compras
+          cd /opt/cobranzas_qa
           sudo pm2 stop app.js || true  
 
 
