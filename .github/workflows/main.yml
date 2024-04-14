@@ -59,14 +59,15 @@ jobs:
           sudo yum update
           sudo yum install -y nodejs npm git
 
-    - name: Clonar repositorio
+    - name: Clone repository
       uses: appleboy/ssh-action@master
       with:
-         host: ${{env.REMOTE_HOST}}
-         username: ${{env.REMOTE_USER}}
-         key: ${{env.SSH_PRIVATE_KEY }}
+         host: ${{ env.REMOTE_HOST }}
+         username: ${{ env.REMOTE_USER }}
+         key: ${{ env.SSH_PRIVATE_KEY }}
          script: |
-          sudo git clone -b cobranzas_qa_am https://github.com/alkemyTech/UMSA-Softtek-DevOps-Base.git /opt/cobranzas_qa
+          cd /opt/cobranzas_qa
+          sudo git clone -b cobranzas_qa_am https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/cobranzas_qa
 
 
     - name: Instalar express
@@ -119,7 +120,7 @@ jobs:
          script: |
           sudo pm2 status myapp
 
-    - name: MOstrar informacion de la pagina
+    - name: Mostrar informacion de la pagina
       uses: appleboy/ssh-action@master
       with:
          host: ${{env.REMOTE_HOST}}
