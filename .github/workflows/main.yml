@@ -126,8 +126,8 @@ jobs:
             echo "" >> Dockerfile
             echo "WORKDIR /app" >> Dockerfile
             echo "" >> Dockerfile
-            echo "COPY opt/cobranzas_qa/package.json ." >> Dockerfile
-            echo "COPY opt/cobranzas_qa/package-lock.json ." >> Dockerfile
+            echo "COPY /opt/cobranzas_qa/package.json ." >> Dockerfile
+            echo "COPY /opt/cobranzas_qa/package-lock.json ." >> Dockerfile
             echo "" >> Dockerfile
             echo "RUN npm install" >> Dockerfile
             echo "" >> Dockerfile
