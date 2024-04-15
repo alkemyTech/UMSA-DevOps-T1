@@ -4,7 +4,7 @@ name: Deploy App Cobranzas
 on:
   push:
     branches:
-      - cobranzas_dev_am
+      - cobranzas_qa_am
 
 jobs:
   deploy:
