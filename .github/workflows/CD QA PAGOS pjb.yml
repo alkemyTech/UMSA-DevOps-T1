@@ -54,7 +54,6 @@ jobs:
       SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_PAGOS_QA }}
       REMOTE_USER: ec2-user
       REMOTE_HOST: ${{ vars.PUBLIC_IP_EC2_PAGOS_QA }}
-      GITHUB_TOKEN: ${{ secrets.GH_TOKEN_PAGOS_QA }}
       APP_NAME: app.js
       
     steps:
