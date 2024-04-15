@@ -136,5 +136,5 @@ jobs:
             sudo docker stop cobranzas_qa || true
             sudo docker rm cobranzas_qa || true
             sudo docker pull ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
-            sudo docker run -d --name cobranzas_qa -p 3000:3000 ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest  
+            sudo docker run -d --name cobranzas_qa -p 8080:8080 ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest  
   
