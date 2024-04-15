@@ -4,14 +4,14 @@ name: Deploy App Cobranzas
 on:
   push:
     branches:
-      - cobranzas_qa_am
+      - cobranzas_dev_am
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     # Variables de entorno.
     env:
-      SSH_PRIVATE_KEY: ${{ secrets.PEM_COBRANZAS_QA }}
+      SSH_PRIVATE_KEY: ${{ secrets.PEM_COBRANZAS_DEV }}
       REMOTE_USER: ec2-user
       REMOTE_HOST: ${{ vars.IP_COBRANZAS_QA }}
       GITHUB_TOKEN: ${{ secrets.TOKEN_GH_AM }}
@@ -56,7 +56,7 @@ jobs:
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
             cd /opt/cobranzas
-            sudo git clone -b cobranzas_qa_am https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/cobranzas
+            sudo git clone -b cobranzas_dev_am https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/cobranzas
 
       # Install npm packages express pm2.
       - name: Install npm packages
@@ -120,3 +120,21 @@ jobs:
           tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
           username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ env.DOCKERHUB_TOKEN }}
+      
+      - name: Check if app is running
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            sudo yum update -y
+            sudo yum install docker -y
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            docker --version
+            sudo docker stop cobranzas_qa || true
+            sudo docker rm cobranzas_qa || true
+            sudo docker pull ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
+            sudo docker run -d --name cobranzas_qa -p 8080:8080 ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest  
+  
