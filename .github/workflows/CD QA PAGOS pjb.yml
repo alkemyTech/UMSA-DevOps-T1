@@ -73,5 +73,6 @@ jobs:
             sudo systemctl start docker
             sudo systemctl enable docker
             docker --version
+            sudo docker rm -f PAGOS_QA || true   
             sudo docker pull paulajuliabalza/pagos_qa_pjb:latest
             sudo docker run -d --name PAGOS_QA -p 3000:3000 --restart always paulajuliabalza/pagos_qa_pjb:latest
