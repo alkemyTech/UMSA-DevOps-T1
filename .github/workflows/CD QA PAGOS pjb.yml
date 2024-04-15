@@ -1,14 +1,14 @@
 name: Build Push Docker Image QA
 
 # Trigger manual workflow_dispatch
-on:
-  workflow_dispatch:
+#on:
+ # workflow_dispatch:
 
 # Trigger on push
-#on:
- # push:
-  #  branches:
-   #   - VENTAS-QA-pjb
+on:
+ push:
+  branches:
+   - pagos_qa_pjb
 
 jobs:
   build:
@@ -16,8 +16,8 @@ jobs:
     
     # Variables de entorno
     env:
-      DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME_pjb }}
+      DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_pjb }}
       APP_NAME: app.js
     
     steps:
@@ -31,8 +31,8 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME_pjb }}
+          password: ${{ secrets.DOCKERHUB_TOKEN_pjb }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -42,7 +42,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ventas_qa_pjb:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME_pjb }}/pagos_qa_pjb:latest
        
             
   deploy:
@@ -51,10 +51,10 @@ jobs:
       
     # Variables de entorno
     env:
-      SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE }}
+      SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_PAGOS_QA }}
       REMOTE_USER: ec2-user
-      REMOTE_HOST: ${{ vars.PUBLIC_IP_EC2_VENTAS_QA }}
-      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      REMOTE_HOST: ${{ vars.PUBLIC_IP_EC2_PAGOS_QA }}
+      GITHUB_TOKEN: ${{ secrets.GH_TOKEN_PAGOS_QA }}
       APP_NAME: app.js
       
     steps:
@@ -74,5 +74,5 @@ jobs:
             sudo systemctl start docker
             sudo systemctl enable docker
             docker --version
-            sudo docker pull paulajuliabalza/VENTAS_QA_pjb:latest
-            sudo docker run -d --name Ventas_QA -p 3000:3000 --restart always paulajuliabalza/ventas_qa_pjb:latest
+            sudo docker pull paulajuliabalza/pagos_qa_pjb:latest
+            sudo docker run -d --name PAGOS_QA -p 3000:3000 --restart always paulajuliabalza/pagos_qa_pjb:latest
