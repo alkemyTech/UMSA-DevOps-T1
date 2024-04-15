@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     # Variables de entorno.
     env:
-      SSH_PRIVATE_KEY: ${{ secrets.PEM_COBRANZAS_DEV }}
+      SSH_PRIVATE_KEY: ${{ secrets.PEM_COBRANZAS_QA }}
       REMOTE_USER: ec2-user
       REMOTE_HOST: ${{ vars.IP_COBRANZAS_QA }}
       GITHUB_TOKEN: ${{ secrets.TOKEN_GH_AM }}
@@ -56,7 +56,7 @@ jobs:
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
             cd /opt/cobranzas
-            sudo git clone -b cobranzas_dev_am https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/cobranzas
+            sudo git clone -b cobranzas_qa_am https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/cobranzas
 
       # Install npm packages express pm2.
       - name: Install npm packages
