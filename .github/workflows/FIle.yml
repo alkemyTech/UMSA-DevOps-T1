@@ -43,9 +43,9 @@ jobs:
         username: ${{ env.REMOTE_USER }}
         key: ${{ env.SSH_PRIVATE_KEY }}
         script: |
-          sudo rm -rf /opt/auditoria_qa || true
+          sudo rm -rf /opt/auditoria || true
           cd /opt
-          sudo mkdir -p auditoria_qa
+          sudo mkdir -p auditoria
   
     # Execute git clone.
     - name: Clone repository
@@ -55,8 +55,8 @@ jobs:
         username: ${{ env.REMOTE_USER }}
         key: ${{ env.SSH_PRIVATE_KEY }}
         script: |
-          cd /opt/auditoria_qa
-          sudo git clone -b auditoria_qa_am https://github.com/alkemyTech/UMSA-qaOps-T1.git /opt/auditoria_qa
+          cd /opt/auditoria
+          sudo git clone -b auditoria_qa_am https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/auditoria
   
     # Install npm packages express pm2.
     - name: Install npm packages
@@ -66,7 +66,7 @@ jobs:
         username: ${{ env.REMOTE_USER }}
         key: ${{ env.SSH_PRIVATE_KEY }}
         script: |
-          cd /opt/auditoria_qa
+          cd /opt/auditoria
           sudo npm install -g express pm2
   
     # Start service
@@ -77,7 +77,7 @@ jobs:
         username: ${{ env.REMOTE_USER }}
         key: ${{ env.SSH_PRIVATE_KEY }}
         script: |
-          cd /opt/auditoria_qa
+          cd /opt/auditoria
           sudo pm2 delete app.js || true
           sudo pm2 start app.js --name 'app.js'
   
