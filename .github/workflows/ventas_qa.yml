@@ -1,89 +1,137 @@
-name: compras_qa_manual_v2
+name: Deploy Ventas_qa
 
-# Configure Manual Trigger
+# Trigger.
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - ventas_qa_sc
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    # Variables de entorno.
     env:
-      #Conexion ssh
       SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_VENTAS_QA }}
       REMOTE_USER: ec2-user
       REMOTE_HOST: ${{ vars.IP_EC2_VENTAS_QA }}
+      GITHUB_TOKEN: ${{ secrets.TOKEN_PAGOS }}
       #Conexion dockerhub
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME_SANTIAGO }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD_SANTIAGO }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_SANTIAGO }}
-
     steps:
-    - name: checkout
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Generar Imagen Docker
-      uses: docker/build-push-action@v5.3.0
-      with:
-        context: .
-        file: Dockerfile
-        push: false
-        tags: ${{ env.DOCKERHUB_USERNAME }}/ventas_qa:latest
+      # Install packages Nodejs Npm Git
+      - name: Install Packages
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            sudo yum update -y
+            sudo yum install nodejs npm git -y
 
-    - name: Iniciar sesion en docker hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ env.DOCKERHUB_USERNAME }}
-        password: ${{ env.DOCKERHUB_PASSWORD }}
+      # Create a Directory
+      - name: Create a Directory
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            sudo rm -rf /opt/ventas || true
+            cd /opt
+            sudo mkdir -p ventas
 
-    - name: Subir a DockerHub
-      uses: docker/build-push-action@v5.3.0
-      with:
-        context: .
-        file: Dockerfile
-        push: true
-        tags: ${{ env.DOCKERHUB_USERNAME }}/ventas_qa:latest
-        username: ${{ env.DOCKERHUB_USERNAME }}
-        password: ${{ env.DOCKERHUB_TOKEN }}
-        
+      # Execute git clone.
+      - name: Clone repository
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/ventas
+            sudo git clone -b ventas_qa_sc https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/ventas
 
-    - name: Actualizar el sistema e instalar Docker
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ env.REMOTE_HOST }}
-        username: ${{ env.REMOTE_USER }}
-        key: ${{ env.SSH_PRIVATE_KEY }}
-        script: |
-          sudo yum update -y
-          sudo yum install docker -y
-          sudo service docker start
-          sudo usermod -aG docker ec2-user
+      # Install npm packages express pm2.
+      - name: Install npm packages
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/ventas
+            sudo npm install -g express pm2
 
-    - name: Eliminar contenedor
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ env.REMOTE_HOST }}
-        username: ${{ env.REMOTE_USER }}
-        key: ${{ env.SSH_PRIVATE_KEY }}
-        script: |
-          docker stop ventas_qa_sc || true
-          docker rm ventas_qa_sc || true
+      # Start service
+      - name: Start Service
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/ventas
+            sudo pm2 delete app.js || true
+            sudo pm2 start app.js --name 'app.js'
 
+      # Check if app is running
+      - name: Check if app is running
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            if sudo pm2 ls | grep -q 'app.js'; then
+              echo "El servicio app.js está en ejecución."
+            else
+              echo "El servicio app.js no está en ejecución."
+              exit 1
+            fi
 
-    - name: Ejecutar contenedor en EC2
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ env.REMOTE_HOST }}
-        username: ${{ env.REMOTE_USER }}
-        key: ${{ env.SSH_PRIVATE_KEY }}
-        script: |
-          docker run -d -p 3000:3000 --name ventas_qa_sc ${{ env.DOCKERHUB_USERNAME }}/ventas_qa:latest
+      - name: Generar Imagen Docker
+        uses: docker/build-push-action@v5.3.0
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          tags: ${{ env.DOCKERHUB_USERNAME }}/ventas_qa:latest
+      
+      - name: Iniciar sesion en docker hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_PASSWORD }}
+      
+      - name: Subir a DockerHub
+        uses: docker/build-push-action@v5.3.0
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ env.DOCKERHUB_USERNAME }}/ventas_qa:latest
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
 
-    - name: MOstrar informacion de la pagina
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ env.REMOTE_HOST }}
-        username: ${{ env.REMOTE_USER }}
-        key: ${{ env.SSH_PRIVATE_KEY }}
-        script: |
-          sudo curl localhost:3000
+      - name: Check if app is running
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            sudo yum update -y
+            sudo yum install docker -y
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            docker --version
+            sudo docker stop ventas_qa || true
+            sudo docker rm ventas_qa || true
+            sudo docker pull ${{ env.DOCKERHUB_USERNAME }}/ventas_qa:latest
+            sudo docker run -d --name ventas_qa -p 8080:3000 ${{ env.DOCKERHUB_USERNAME }}/ventas_qa:latest
