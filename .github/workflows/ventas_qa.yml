@@ -1,72 +1,89 @@
-name: Build Push Docker Image Ventas 
+name: compras_qa_manual_v2
 
-# Trigger on push
+# Configure Manual Trigger
 on:
- push:
-  branches:
-   - ventas_qa_sc
+  workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    
-    env:
-      DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME_santiago }}
-      DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_santiago }}
-      APP_NAME: app.js
-    
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-     
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME_santiago }}
-          password: ${{ secrets.DOCKERHUB_TOKEN_santiago }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME_santiago }}/ventas_qa_sc:latest
-       
-            
   deploy:
-    needs: build
     runs-on: ubuntu-latest
-      
-    # Variables de entorno
+
     env:
+      #Conexion ssh
       SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_VENTAS_QA }}
       REMOTE_USER: ec2-user
       REMOTE_HOST: ${{ vars.IP_EC2_VENTAS_QA }}
-      APP_NAME: app.js
-      
+      #Conexion dockerhub
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME_SANTIAGO }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD_SANTIAGO }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_SANTIAGO }}
+
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v2
-  
-      # Install Docker in EC2, pull and run container
-      - name: Install Docker
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ env.REMOTE_HOST }}
-          username: ${{ env.REMOTE_USER }}
-          key: ${{ env.SSH_PRIVATE_KEY }}
-          script: |
-            sudo yum update -y
-            sudo yum install docker -y
-            sudo systemctl start docker
-            sudo systemctl enable docker
-            docker --version
-            sudo docker rm -f VENTAS_QA || true   
-            sudo docker pull santicenturion/ventas_qa_sc:latest
-            sudo docker run -d --name VENTAS_QA -p 3000:3000 --restart always santicenturion/ventas_qa_sc:latest
+    - name: checkout
+      uses: actions/checkout@v4
+
+    - name: Generar Imagen Docker
+      uses: docker/build-push-action@v5.3.0
+      with:
+        context: .
+        file: Dockerfile
+        push: false
+        tags: ${{ env.DOCKERHUB_USERNAME }}/ventas_qa:latest
+
+    - name: Iniciar sesion en docker hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ env.DOCKERHUB_USERNAME }}
+        password: ${{ env.DOCKERHUB_PASSWORD }}
+
+    - name: Subir a DockerHub
+      uses: docker/build-push-action@v5.3.0
+      with:
+        context: .
+        file: Dockerfile
+        push: true
+        tags: ${{ env.DOCKERHUB_USERNAME }}/ventas_qa:latest
+        username: ${{ env.DOCKERHUB_USERNAME }}
+        password: ${{ env.DOCKERHUB_TOKEN }}
+        
+
+    - name: Actualizar el sistema e instalar Docker
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          sudo yum update -y
+          sudo yum install docker -y
+          sudo service docker start
+          sudo usermod -aG docker ec2-user
+
+    - name: Eliminar contenedor
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          docker stop ventas_qa_sc || true
+          docker rm ventas_qa_sc || true
+
+
+    - name: Ejecutar contenedor en EC2
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          docker run -d -p 3000:3000 --name ventas_qa_sc ${{ env.DOCKERHUB_USERNAME }}/ventas_qa:latest
+
+    - name: MOstrar informacion de la pagina
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          sudo curl localhost:3000
