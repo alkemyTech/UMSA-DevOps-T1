@@ -161,7 +161,7 @@ jobs:
         username: ${{ env.REMOTE_USER }}
         key: ${{ env.SSH_PRIVATE_KEY }}
         script: |
-          sudo docker run -d -p 3000:3000 --name auditoria_qa ${{ env.DOCKERHUB_USERNAME }}/auditoria_qa:latest
+          sudo docker run -d -p 8080:8080 --name auditoria_qa ${{ env.DOCKERHUB_USERNAME }}/auditoria_qa:latest
 
     - name: Mostrar información de la página
       uses: appleboy/ssh-action@master
@@ -170,7 +170,7 @@ jobs:
         username: ${{ env.REMOTE_USER }}
         key: ${{ env.SSH_PRIVATE_KEY }}
         script: |
-          sudo curl localhost:3000
+          sudo curl localhost:8080
 
 
     
