@@ -15,8 +15,7 @@ jobs:
       REMOTE_USER: ec2-user
       REMOTE_HOST: ${{ vars.IP_COBRANZAS_QA }}
       GITHUB_TOKEN: ${{ secrets.TOKEN_GH_AM }}
-      APP_NAME: app.js
-    #Conexion dockerhub
+      #Conexion dockerhub
       DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME_AM }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD_AM }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_AM }}
@@ -89,12 +88,11 @@ jobs:
           username: ${{ env.REMOTE_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
-            # if sudo pm2 status | grep -q  '${{ env.APP_NAME }}'; then --> otra opción
-            if sudo pm2 ls | grep -q  '${{ env.APP_NAME }}'; then
-            echo "El servicio ${{ env.APP_NAME }} está en ejecución."
+            if sudo pm2 ls | grep -q 'app.js'; then
+              echo "El servicio app.js está en ejecución."
             else
-            echo "El servicio ${{ env.APP_NAME }} no está en ejecución."
-            exit 1
+              echo "El servicio app.js no está en ejecución."
+              exit 1
             fi
 
       - name: Generar Imagen Docker
@@ -120,7 +118,7 @@ jobs:
           tags: ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
           username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ env.DOCKERHUB_TOKEN }}
-      
+
       - name: Check if app is running
         uses: appleboy/ssh-action@master
         with:
@@ -128,13 +126,9 @@ jobs:
           username: ${{ env.REMOTE_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
-            sudo yum update -y
-            sudo yum install docker -y
-            sudo systemctl start docker
-            sudo systemctl enable docker
-            docker --version
             sudo docker stop cobranzas_qa || true
             sudo docker rm cobranzas_qa || true
             sudo docker pull ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
-            sudo docker run -d --name cobranzas_qa -p 3000:3000 ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest  
+            sudo docker run -d --name cobranzas_qa -p 3000:3000 ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
+
   
