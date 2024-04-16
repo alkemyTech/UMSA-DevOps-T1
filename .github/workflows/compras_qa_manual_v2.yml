@@ -1,0 +1,49 @@
+name: compras_qa_manual_v2
+
+# Configure Manual Trigger
+on:
+  push:
+    branches:
+      - compras_qa_il
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      #Conexion ssh
+      SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_COMPRAS }}
+      REMOTE_USER: ec2-user
+      REMOTE_HOST: ${{ vars.AWS_DEV_HOST_COMPRAS_QA }}
+      #Conexion dockerhub
+      DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME_COMPRAS_QA }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD_COMPRAS_QA }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_COMPRAS_QA }}
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+
+    - name: Generar Imagen Docker
+      uses: docker/build-push-action@v5.3.0
+      with:
+        context: .
+        file: Dockerfile
+        push: false
+        tags: ${{ env.DOCKERHUB_USERNAME }}/compras_qa:latest
+
+    - name: Iniciar sesion en docker hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ env.DOCKERHUB_USERNAME }}
+        password: ${{ env.DOCKERHUB_PASSWORD }}
+
+    - name: Subir a DockerHub
+      uses: docker/build-push-action@v5.3.0
+      with:
+        context: .
+        file: Dockerfile
+        push: true
+        tags: ${{ env.DOCKERHUB_USERNAME }}/compras_qa:latest
+        username: ${{ env.DOCKERHUB_USERNAME }}
+        password: ${{ env.DOCKERHUB_TOKEN }}
