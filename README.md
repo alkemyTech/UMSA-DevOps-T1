@@ -1,4 +1,4 @@
-# Ejemplo de Microservicio en NodeJS.
+# Ejemplo de Microservicio en NodeJS..
 
 El archivo App.js contiene el microservicio.
 
