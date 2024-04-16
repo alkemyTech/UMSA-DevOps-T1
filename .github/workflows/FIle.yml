@@ -1,4 +1,4 @@
-name: Auditoria_qa
+name: Deploy App Auditoria
 
 # Trigger.
 on:
@@ -89,14 +89,13 @@ jobs:
         username: ${{ env.REMOTE_USER }}
         key: ${{ env.SSH_PRIVATE_KEY }}
         script: |
-          # if sudo pm2 status | grep -q  '${{ env.APP_NAME }}'; then --> otra opción
-            if sudo pm2 ls | grep -q  '${{ env.APP_NAME }}'; then
-            echo "El servicio ${{ env.APP_NAME }} está en ejecución."
-            else
-            echo "El servicio ${{ env.APP_NAME }} no está en ejecución."
+          if sudo pm2 ls | grep -q 'app.js'; then
+            echo "El servicio app.js está en ejecución."
+          else
+            echo "El servicio app.js no está en ejecución."
             exit 1
-            fi  
-    
+          fi  
+
     - name: checkout
       uses: actions/checkout@v4
 
@@ -136,27 +135,35 @@ jobs:
           sudo service docker start
           sudo usermod -aG docker ec2-user
 
-    - name: Eliminar contenedor
+    - name: Detener y eliminar aplicación existente
       uses: appleboy/ssh-action@master
       with:
         host: ${{ env.REMOTE_HOST }}
         username: ${{ env.REMOTE_USER }}
         key: ${{ env.SSH_PRIVATE_KEY }}
         script: |
-          docker stop auditoria_qa || true
-          docker rm auditoria_qa || true
+          sudo pm2 delete app.js || true
 
-
-    - name: Ejecutar contenedor en EC2
+    - name: Detener y eliminar contenedor existente
       uses: appleboy/ssh-action@master
       with:
         host: ${{ env.REMOTE_HOST }}
         username: ${{ env.REMOTE_USER }}
         key: ${{ env.SSH_PRIVATE_KEY }}
         script: |
-          docker run -d -p 3000:3000 --name auditoria_qa ${{ env.DOCKERHUB_USERNAME }}/auditoria_qa:latest
+          sudo docker stop auditoria_qa || true
+          sudo docker rm auditoria_qa || true
 
-    - name: MOstrar informacion de la pagina
+    - name: Ejecutar nuevo contenedor Docker
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          sudo docker run -d -p 3000:3000 --name auditoria_qa ${{ env.DOCKERHUB_USERNAME }}/auditoria_qa:latest
+
+    - name: Mostrar información de la página
       uses: appleboy/ssh-action@master
       with:
         host: ${{ env.REMOTE_HOST }}
@@ -164,5 +171,6 @@ jobs:
         key: ${{ env.SSH_PRIVATE_KEY }}
         script: |
           sudo curl localhost:3000
+
 
     
