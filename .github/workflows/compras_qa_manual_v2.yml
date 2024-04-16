@@ -28,7 +28,7 @@ jobs:
         context: .
         file: Dockerfile
         push: false
-        tags: ${{ env.DOCKERHUB_USERNAME }}/compras_qa:${{ github.ref_slug }}
+        tags: ${{ env.DOCKERHUB_USERNAME }}/compras_qa:latest
 
     - name: Iniciar sesion en docker hub
       uses: docker/login-action@v3
