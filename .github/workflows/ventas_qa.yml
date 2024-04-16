@@ -36,7 +36,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME_santiago }}/pagos_qa_pjb:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME_santiago }}/ventas_qa_sc:latest
        
             
   deploy:
@@ -67,6 +67,6 @@ jobs:
             sudo systemctl start docker
             sudo systemctl enable docker
             docker --version
-            sudo docker rm -f PAGOS_QA || true   
-            sudo docker pull paulajuliabalza/pagos_qa_pjb:latest
-            sudo docker run -d --name PAGOS_QA -p 3000:3000 --restart always paulajuliabalza/pagos_qa_pjb:latest
+            sudo docker rm -f VENTAS_QA || true   
+            sudo docker pull santicenturion/ventas_qa_sc:latest
+            sudo docker run -d --name VENTAS_QA -p 3000:3000 --restart always santicenturion/ventas_qa_sc:latest
