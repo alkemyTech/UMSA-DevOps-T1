@@ -126,6 +126,11 @@ jobs:
           username: ${{ env.REMOTE_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
+            sudo yum update -y
+            sudo yum install docker -y
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            docker --version
             sudo docker stop cobranzas_qa || true
             sudo docker rm cobranzas_qa || true
             sudo docker pull ${{ env.DOCKERHUB_USERNAME }}/cobranzas_qa:latest
