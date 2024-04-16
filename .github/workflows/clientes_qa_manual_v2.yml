@@ -1,0 +1,90 @@
+name: clientes_qa_manual_v2
+
+# Configure Manual Trigger
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      #Conexion ssh
+      SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_CLIENTES }}
+      REMOTE_USER: ec2-user
+      REMOTE_HOST: ${{ vars.AWS_DEV_HOST_CLIENTES_QA }}
+      #Conexion dockerhub
+      DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME_CLIENTES_QA }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD_CLIENTES_QA }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_CLIENTES_QA }}
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+
+    - name: Generar Imagen Docker
+      uses: docker/build-push-action@v5.3.0
+      with:
+        context: .
+        file: Dockerfile
+        push: false
+        tags: ${{ env.DOCKERHUB_USERNAME }}/clientes_qa:latest
+
+    - name: Iniciar sesion en docker hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ env.DOCKERHUB_USERNAME }}
+        password: ${{ env.DOCKERHUB_PASSWORD }}
+
+    - name: Subir a DockerHub
+      uses: docker/build-push-action@v5.3.0
+      with:
+        context: .
+        file: Dockerfile
+        push: true
+        tags: ${{ env.DOCKERHUB_USERNAME }}/clientes_qa:latest
+        username: ${{ env.DOCKERHUB_USERNAME }}
+        password: ${{ env.DOCKERHUB_TOKEN }}
+
+    - name: Actualizar el sistema e instalar Docker
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          sudo yum update -y
+          sudo yum install docker -y
+          sudo service docker start
+          sudo usermod -aG docker ec2-user
+
+    - name: Eliminar contenedor
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          docker stop clientes_qa || true
+          docker rm clientes_qa || true
+
+
+    - name: Ejecutar contenedor en EC2
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          docker run -d -p 3000:3000 --name clientes_qa ${{ env.DOCKERHUB_USERNAME }}/clientes_qa:latest
+
+    - name: MOstrar informacion de la pagina
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          sudo curl localhost:3000
+
+    
