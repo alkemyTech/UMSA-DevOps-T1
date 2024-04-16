@@ -79,8 +79,8 @@ jobs:
     - name: MOstrar informacion de la pagina
       uses: appleboy/ssh-action@master
       with:
-         host: ${{env.REMOTE_HOST}}
-         username: ${{env.REMOTE_USER}}
-         key: ${{env.SSH_PRIVATE_KEY }}
-         script: |
-          sudo curl ${{ env.REMOTE_HOST }}:3000
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          sudo curl localhost:3000
