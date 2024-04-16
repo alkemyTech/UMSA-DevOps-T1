@@ -45,3 +45,46 @@ jobs:
         tags: ${{ env.DOCKERHUB_USERNAME }}/compras_qa:latest
         username: ${{ env.DOCKERHUB_USERNAME }}
         password: ${{ env.DOCKERHUB_TOKEN }}
+
+    - name: Actualizar el sistema e instalar Docker
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          sudo yum update -y
+          sudo yum install docker -y
+          sudo service docker start
+          sudo usermod -aG docker ec2-user
+
+    - name: Eliminar contenedor
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          docker stop compras_qa_il || true
+          docker rm compras_qa_il || true
+
+
+    - name: Ejecutar contenedor en EC2
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          docker run -d -p 3000:3000 --name compras_qa_il ${{ env.DOCKERHUB_USERNAME }}/compras_qa:latest
+
+    - name: MOstrar informacion de la pagina
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          sudo curl localhost:3000
+
+    
