@@ -45,3 +45,12 @@ jobs:
         tags: ${{ env.DOCKERHUB_USERNAME }}/compras_qa:latest
         username: ${{ env.DOCKERHUB_USERNAME }}
         password: ${{ env.DOCKERHUB_TOKEN }}
+
+    - name: Ejecutar contenedor en EC2
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          docker run -d -p 3000:3000 ${{ env.DOCKERHUB_USERNAME }}/compras_qa:latest
