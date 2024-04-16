@@ -1,125 +1,63 @@
-name: Deploy Ventas_qa
+name: Deploy APP ventas
 
-# Trigger.
+# Trigger on push
 on:
-  push:
-    branches:
-      - ventas_qa_sc
+ push:
+  branches:
+   - ventas_qa_sc
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    # Variables de entorno.
+    
+    # Variables de entorno
+    env:
+      DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME_SANTIAGO }}
+      DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_SANTIAGO }}
+      APP_NAME: app.js
+    
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # https://github.com/docker/build-push-action
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+     
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_USER }}
+          password: ${{ env.DOCKER_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.DOCKER_USER }}/ventas_qa_sc:latest
+       
+            
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+      
+    # Variables de entorno
     env:
       SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_VENTAS_QA }}
       REMOTE_USER: ec2-user
       REMOTE_HOST: ${{ vars.IP_EC2_VENTAS_QA }}
-      GITHUB_TOKEN: ${{ secrets.TOKEN_PAGOS }}
-      #Conexion dockerhub
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME_SANTIAGO }}
-      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD_SANTIAGO }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_SANTIAGO }}
+      APP_NAME: app.js
+      
     steps:
-      - name: Checkout code
+      - name: Checkout Source Code
         uses: actions/checkout@v2
-
-      # Install packages Nodejs Npm Git
-      - name: Install Packages
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ env.REMOTE_HOST }}
-          username: ${{ env.REMOTE_USER }}
-          key: ${{ env.SSH_PRIVATE_KEY }}
-          script: |
-            sudo yum update -y
-            sudo yum install nodejs npm git -y
-
-      # Create a Directory
-      - name: Create a Directory
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ env.REMOTE_HOST }}
-          username: ${{ env.REMOTE_USER }}
-          key: ${{ env.SSH_PRIVATE_KEY }}
-          script: |
-            sudo rm -rf /opt/ventas || true
-            cd /opt
-            sudo mkdir -p ventas
-
-      # Execute git clone.
-      - name: Clone repository
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ env.REMOTE_HOST }}
-          username: ${{ env.REMOTE_USER }}
-          key: ${{ env.SSH_PRIVATE_KEY }}
-          script: |
-            cd /opt/ventas
-            sudo git clone -b ventas_qa_sc https://github.com/alkemyTech/UMSA-DevOps-T1.git /opt/ventas
-
-      # Install npm packages express pm2.
-      - name: Install npm packages
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ env.REMOTE_HOST }}
-          username: ${{ env.REMOTE_USER }}
-          key: ${{ env.SSH_PRIVATE_KEY }}
-          script: |
-            cd /opt/ventas
-            sudo npm install -g express pm2
-
-      # Start service
-      - name: Start Service
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ env.REMOTE_HOST }}
-          username: ${{ env.REMOTE_USER }}
-          key: ${{ env.SSH_PRIVATE_KEY }}
-          script: |
-            cd /opt/ventas
-            sudo pm2 delete app.js || true
-            sudo pm2 start app.js --name 'app.js'
-
-      # Check if app is running
-      - name: Check if app is running
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ env.REMOTE_HOST }}
-          username: ${{ env.REMOTE_USER }}
-          key: ${{ env.SSH_PRIVATE_KEY }}
-          script: |
-            if sudo pm2 ls | grep -q 'app.js'; then
-              echo "El servicio app.js está en ejecución."
-            else
-              echo "El servicio app.js no está en ejecución."
-              exit 1
-            fi
-
-      - name: Generar Imagen Docker
-        uses: docker/build-push-action@v5.3.0
-        with:
-          context: .
-          file: Dockerfile
-          push: false
-          tags: ${{ env.DOCKERHUB_USERNAME }}/ventas_qa:latest
-      
-      - name: Iniciar sesion en docker hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ env.DOCKERHUB_USERNAME }}
-          password: ${{ env.DOCKERHUB_PASSWORD }}
-      
-      - name: Subir a DockerHub
-        uses: docker/build-push-action@v5.3.0
-        with:
-          context: .
-          file: Dockerfile
-          push: true
-          tags: ${{ env.DOCKERHUB_USERNAME }}/ventas_qa:latest
-          username: ${{ env.DOCKERHUB_USERNAME }}
-          password: ${{ env.DOCKERHUB_TOKEN }}
-
-      - name: Check if app is running
+  
+      # Install Docker in EC2, pull and run container
+      - name: Install Docker
         uses: appleboy/ssh-action@master
         with:
           host: ${{ env.REMOTE_HOST }}
@@ -131,7 +69,6 @@ jobs:
             sudo systemctl start docker
             sudo systemctl enable docker
             docker --version
-            sudo docker stop ventas_qa || true
-            sudo docker rm ventas_qa || true
-            sudo docker pull ${{ env.DOCKERHUB_USERNAME }}/ventas_qa:latest
-            sudo docker run -d --name ventas_qa -p 8080:3000 ${{ env.DOCKERHUB_USERNAME }}/ventas_qa:latest
+            sudo docker rm -f VENTAS_QA || true   
+            sudo docker pull santicenturion/ventas_qa_sc:latest
+            sudo docker run -d --name VENTAS_QA -p 3000:3000 --restart always santicenturion/ventas_qa_sc:latest
