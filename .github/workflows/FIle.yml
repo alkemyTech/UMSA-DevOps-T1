@@ -1,0 +1,168 @@
+name: Auditoria_qa
+
+# Trigger.
+on:
+  push:
+    branches:
+      - auditoria_qa_am
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      #Conexion ssh
+      SSH_PRIVATE_KEY: ${{ secrets.PEM_AUDITORIA_QA }}
+      REMOTE_USER: ec2-user
+      REMOTE_HOST: ${{ vars.IP_AUDITORIA_QA }}
+      GITHUB_TOKEN: ${{ secrets.TOKEN_GH_AM }}
+      APP_NAME: app.js
+      #Conexion dockerhub
+      DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME_AM }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD_AM }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_AM }}
+
+    steps:
+
+    # Install packages Nodejs Npm Git
+    - name: Install Packages
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          sudo yum update -y
+          sudo yum install nodejs npm git -y
+  
+    # Create a Directory
+    - name: Create a Directory
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          sudo rm -rf /opt/auditoria_qa || true
+          cd /opt
+          sudo mkdir -p auditoria_qa
+  
+    # Execute git clone.
+    - name: Clone repository
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          cd /opt/auditoria_qa
+          sudo git clone -b auditoria_qa_am https://github.com/alkemyTech/UMSA-qaOps-T1.git /opt/auditoria_qa
+  
+    # Install npm packages express pm2.
+    - name: Install npm packages
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          cd /opt/auditoria_qa
+          sudo npm install -g express pm2
+  
+    # Start service
+    - name: Start Service
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          cd /opt/auditoria_qa
+          sudo pm2 delete app.js || true
+          sudo pm2 start app.js --name 'app.js'
+  
+    # Check if app is running
+    - name: Check if app is running
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          # if sudo pm2 status | grep -q  '${{ env.APP_NAME }}'; then --> otra opción
+            if sudo pm2 ls | grep -q  '${{ env.APP_NAME }}'; then
+            echo "El servicio ${{ env.APP_NAME }} está en ejecución."
+            else
+            echo "El servicio ${{ env.APP_NAME }} no está en ejecución."
+            exit 1
+            fi  
+    
+    - name: checkout
+      uses: actions/checkout@v4
+
+    - name: Generar Imagen Docker
+      uses: docker/build-push-action@v5.3.0
+      with:
+        context: .
+        file: Dockerfile
+        push: false
+        tags: ${{ env.DOCKERHUB_USERNAME }}/auditoria_qa:latest
+
+    - name: Iniciar sesion en docker hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ env.DOCKERHUB_USERNAME }}
+        password: ${{ env.DOCKERHUB_PASSWORD }}
+
+    - name: Subir a DockerHub
+      uses: docker/build-push-action@v5.3.0
+      with:
+        context: .
+        file: Dockerfile
+        push: true
+        tags: ${{ env.DOCKERHUB_USERNAME }}/auditoria_qa:latest
+        username: ${{ env.DOCKERHUB_USERNAME }}
+        password: ${{ env.DOCKERHUB_TOKEN }}
+
+    - name: Actualizar el sistema e instalar Docker
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          sudo yum update -y
+          sudo yum install docker -y
+          sudo service docker start
+          sudo usermod -aG docker ec2-user
+
+    - name: Eliminar contenedor
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          docker stop auditoria_qa || true
+          docker rm auditoria_qa || true
+
+
+    - name: Ejecutar contenedor en EC2
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          docker run -d -p 3000:3000 --name auditoria_qa ${{ env.DOCKERHUB_USERNAME }}/auditoria_qa:latest
+
+    - name: MOstrar informacion de la pagina
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.REMOTE_HOST }}
+        username: ${{ env.REMOTE_USER }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: |
+          sudo curl localhost:3000
+
+    
