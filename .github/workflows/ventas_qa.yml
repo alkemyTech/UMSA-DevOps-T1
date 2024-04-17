@@ -3,7 +3,7 @@ name: App ventas
 on:
   push:
     branches:
-      - ventas_sc
+      - ventas_qa_sc
 jobs:
   deploy:
     runs-on: ubuntu-latest
