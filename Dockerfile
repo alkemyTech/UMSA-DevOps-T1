@@ -1,4 +1,4 @@
-# Usar una imagen base de Node.js
+# Usar una imagen base de Node.js.
 FROM node:14
 
 # Establecer el directorio de trabajo dentro del contenedor
