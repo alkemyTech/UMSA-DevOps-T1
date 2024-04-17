@@ -2,9 +2,7 @@ name: compras_qa_manual_v2
 
 # Configure Manual Trigger
 on:
-  push:
-    branches:
-      - compras_qa_il
+  workflow_dispatch:
 
 jobs:
   deploy:
