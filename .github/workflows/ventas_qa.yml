@@ -1,9 +1,9 @@
 name: App ventas
 
-# Configure Manual Trigger
 on:
-  workflow_dispatch:
-
+  push:
+    branches:
+      - ventas_sc
 jobs:
   deploy:
     runs-on: ubuntu-latest
