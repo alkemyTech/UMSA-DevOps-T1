@@ -1,4 +1,4 @@
-name: Deploy APP ventas
+name: Deploy App ventas
 
 # Trigger on push
 on:
