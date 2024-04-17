@@ -21,7 +21,7 @@ EXPOSE 9090
 
 # Copiar los archivos de configuración de Prometheus
 COPY prometheus.yml /etc/prometheus/
-COPY alerta.yml /etc/prometheus/
+COPY servicedown.yml /etc/prometheus/
 
 # Comando para ejecutar la aplicación
 CMD ["node", "/app/app.js"]
