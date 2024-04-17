@@ -1,0 +1,78 @@
+name: Build Push Docker Image QA
+
+# Trigger manual workflow_dispatch
+#on:
+ # workflow_dispatch:
+
+# Trigger on push
+on:
+ push:
+  branches:
+   - proveedores_qa_pjb
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    # Variables de entorno
+    env:
+      DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME_pjb }}
+      DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_pjb }}
+      APP_NAME: app.js
+    
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # https://github.com/docker/build-push-action
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+     
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME_pjb }}
+          password: ${{ secrets.DOCKERHUB_TOKEN_pjb }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME_pjb }}/proveedores_qa_pjb:latest
+       
+            
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+      
+    # Variables de entorno
+    env:
+      SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_PAGOS_QA }}
+      REMOTE_USER: ec2-user
+      REMOTE_HOST: ${{ vars.PUBLIC_IP_EC2_PROVEEDORES_QA }}
+      APP_NAME: app.js
+      
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v2
+  
+      # Install Docker in EC2, pull and run container
+      - name: Install Docker
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            sudo yum update -y
+            sudo yum install docker -y
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            docker --version
+            sudo docker rm -f PROVEEDORES_QA || true   
+            sudo docker pull paulajuliabalza/proveedores_qa_pjb:latest
+            sudo docker run -d --name PROVEEDORES_QA -p 3000:3000 --restart always paulajuliabalza/proveedores_qa_pjb:latest
