@@ -1,14 +1,14 @@
 name: Build Push Docker Image QA
 
 # Trigger manual workflow_dispatch
-#on:
- # workflow_dispatch:
+on:
+  workflow_dispatch:
 
 # Trigger on push
-on:
- push:
-  branches:
-   - proveedores_qa_pjb
+#on:
+ #push:
+  #branches:
+   #- proveedores_qa_pjb
 
 jobs:
   build:
