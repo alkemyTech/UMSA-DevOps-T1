@@ -1,4 +1,4 @@
-name: App ventas
+name: App ventas ec2
 
 on:
   push:
