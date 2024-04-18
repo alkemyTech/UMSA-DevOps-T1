@@ -1,90 +1,85 @@
-name: compras_qa_manual_v2
+name: compras_qa_manual_v2  # Nombre del flujo de trabajo
 
 # Configure Manual Trigger
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Disparador manual
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  deploy:  # Trabajo de despliegue
+    runs-on: ubuntu-latest  # Ejecución en una máquina Ubuntu
 
-    env:
-      #Conexion ssh
-      SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_COMPRAS }}
-      REMOTE_USER: ec2-user
-      REMOTE_HOST: ${{ vars.AWS_DEV_HOST_COMPRAS_QA }}
-      #Conexion dockerhub
-      DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME_COMPRAS_QA }}
-      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD_COMPRAS_QA }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_COMPRAS_QA }}
+    env:  # Variables de entorno necesarias
+      SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_COMPRAS }}  # Clave privada SSH
+      REMOTE_USER: ec2-user  # Usuario remoto para la conexión SSH
+      REMOTE_HOST: ${{ vars.AWS_DEV_HOST_COMPRAS_QA }}  # Host remoto (dirección IP o nombre de dominio)
+      DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME_COMPRAS_QA }}  # Nombre de usuario de Docker Hub
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD_COMPRAS_QA }}  # Contraseña de Docker Hub
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN_COMPRAS_QA }}  # Token de Docker Hub
 
-    steps:
-    - name: checkout
+    steps:  # Pasos del trabajo
+    - name: checkout  # Paso para clonar el repositorio
       uses: actions/checkout@v4
 
-    - name: Generar Imagen Docker
+    - name: Generar Imagen Docker  # Paso para construir la imagen Docker
       uses: docker/build-push-action@v5.3.0
       with:
-        context: .
-        file: Dockerfile
-        push: false
-        tags: ${{ env.DOCKERHUB_USERNAME }}/compras_qa:latest
+        context: .  # Contexto de la construcción
+        file: Dockerfile  # Archivo Dockerfile
+        push: false  # No subir la imagen en este paso
+        tags: ${{ env.DOCKERHUB_USERNAME }}/compras_qa:latest  # Etiqueta de la imagen
 
-    - name: Iniciar sesion en docker hub
+    - name: Iniciar sesion en docker hub  # Paso para iniciar sesión en Docker Hub
       uses: docker/login-action@v3
       with:
-        username: ${{ env.DOCKERHUB_USERNAME }}
-        password: ${{ env.DOCKERHUB_PASSWORD }}
+        username: ${{ env.DOCKERHUB_USERNAME }}  # Nombre de usuario de Docker Hub
+        password: ${{ env.DOCKERHUB_PASSWORD }}  # Contraseña de Docker Hub
 
-    - name: Subir a DockerHub
+    - name: Subir a DockerHub  # Paso para subir la imagen a Docker Hub
       uses: docker/build-push-action@v5.3.0
       with:
-        context: .
-        file: Dockerfile
-        push: true
-        tags: ${{ env.DOCKERHUB_USERNAME }}/compras_qa:latest
-        username: ${{ env.DOCKERHUB_USERNAME }}
-        password: ${{ env.DOCKERHUB_TOKEN }}
+        context: .  # Contexto de la construcción
+        file: Dockerfile  # Archivo Dockerfile
+        push: true  # Subir la imagen
+        tags: ${{ env.DOCKERHUB_USERNAME }}/compras_qa:latest  # Etiqueta de la imagen
+        username: ${{ env.DOCKERHUB_USERNAME }}  # Nombre de usuario de Docker Hub
+        password: ${{ env.DOCKERHUB_TOKEN }}  # Token de Docker Hub
 
-    - name: Actualizar el sistema e instalar Docker
+    - name: Actualizar el sistema e instalar Docker  # Paso para actualizar el sistema y instalar Docker en la instancia remota
       uses: appleboy/ssh-action@master
       with:
-        host: ${{ env.REMOTE_HOST }}
-        username: ${{ env.REMOTE_USER }}
-        key: ${{ env.SSH_PRIVATE_KEY }}
+        host: ${{ env.REMOTE_HOST }}  # Host remoto
+        username: ${{ env.REMOTE_USER }}  # Usuario remoto
+        key: ${{ env.SSH_PRIVATE_KEY }}  # Clave privada SSH
         script: |
-          sudo yum update -y
-          sudo yum install docker -y
-          sudo service docker start
-          sudo usermod -aG docker ec2-user
+          sudo yum update -y  # Actualizar el sistema
+          sudo yum install docker -y  # Instalar Docker
+          sudo service docker start  # Iniciar Docker
+          sudo usermod -aG docker ec2-user  # Añadir usuario al grupo docker
 
-    - name: Eliminar contenedor
+    - name: Eliminar contenedor  # Paso para detener y eliminar el contenedor Docker existente
       uses: appleboy/ssh-action@master
       with:
-        host: ${{ env.REMOTE_HOST }}
-        username: ${{ env.REMOTE_USER }}
-        key: ${{ env.SSH_PRIVATE_KEY }}
+        host: ${{ env.REMOTE_HOST }}  # Host remoto
+        username: ${{ env.REMOTE_USER }}  # Usuario remoto
+        key: ${{ env.SSH_PRIVATE_KEY }}  # Clave privada SSH
         script: |
-          docker stop compras_qa_il || true
-          docker rm compras_qa_il || true
+          docker stop compras_qa_il || true  # Detener el contenedor si existe
+          docker rm compras_qa_il || true  # Eliminar el contenedor si existe
 
-
-    - name: Ejecutar contenedor en EC2
+    - name: Ejecutar contenedor en EC2  # Paso para ejecutar un nuevo contenedor Docker en la instancia EC2
       uses: appleboy/ssh-action@master
       with:
-        host: ${{ env.REMOTE_HOST }}
-        username: ${{ env.REMOTE_USER }}
-        key: ${{ env.SSH_PRIVATE_KEY }}
+        host: ${{ env.REMOTE_HOST }}  # Host remoto
+        username: ${{ env.REMOTE_USER }}  # Usuario remoto
+        key: ${{ env.SSH_PRIVATE_KEY }}  # Clave privada SSH
         script: |
-          docker run -d -p 3000:3000 --name compras_qa_il ${{ env.DOCKERHUB_USERNAME }}/compras_qa:latest
+          docker run -d -p 3000:3000 --name compras_qa_il ${{ env.DOCKERHUB_USERNAME }}/compras_qa:latest  # Ejecutar contenedor Docker
 
-    - name: MOstrar informacion de la pagina
+    - name: Mostrar información de la página  # Paso para verificar que la página esté en funcionamiento
       uses: appleboy/ssh-action@master
       with:
-        host: ${{ env.REMOTE_HOST }}
-        username: ${{ env.REMOTE_USER }}
-        key: ${{ env.SSH_PRIVATE_KEY }}
+        host: ${{ env.REMOTE_HOST }}  # Host remoto
+        username: ${{ env.REMOTE_USER }}  # Usuario remoto
+        key: ${{ env.SSH_PRIVATE_KEY }}  # Clave privada SSH
         script: |
-          sudo curl localhost:3000
-
-    
+          sudo curl localhost:3000  # Realizar una solicitud HTTP a la página web
